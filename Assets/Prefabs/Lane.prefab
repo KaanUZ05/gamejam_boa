@@ -49,7 +49,7 @@ MonoBehaviour:
   laneIndex: 0
   spriteRenderer: {fileID: 6585233345840590391}
   visualTransform: {fileID: 5150936880498657532}
-  laneSprite: {fileID: 0}
+  laneSprite: {fileID: 7482667652216324306, guid: 710e49129f02f2949bb42a9d7d2ad911, type: 3}
   laneWidth: 20
   laneHeight: 1.5
 --- !u!61 &-480975382594929243

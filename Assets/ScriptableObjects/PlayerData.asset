@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 84c25d82fb814954a15a26feee052c98, type: 3}
-  m_Name: GDKEdition
-  m_EditorClassIdentifier: Unity.Microsoft.GDK::Unity.XGamingRuntime.GdkEditionAsset
-  m_EditionNumber: -1
+  m_Script: {fileID: 11500000, guid: c1a03452095418d44955850e590ec076, type: 3}
+  m_Name: PlayerData
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerData
+  Player1Score: 0
+  Player2Score: 0

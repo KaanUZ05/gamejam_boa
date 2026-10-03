@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -37,32 +38,57 @@ public class Obstacle : MonoBehaviour,
 
     public void Initialize(ObstacleData data)
     {
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
+
+        if (obstacleCollider == null)
+        {
+            obstacleCollider = GetComponent<BoxCollider2D>();
+        }
+
+        if (placementGrid == null)
+        {
+            placementGrid = FindFirstObjectByType<PlacementGrid>();
+        }
+
         this.data = data;
         spriteRenderer.sprite = data.conveyorSprite;
         transform.localScale = Vector3.one;
+
+        if (visualTransform != null)
+        {
+            visualTransform.localScale = Vector3.one;
+        }
+
+        if (obstacleCollider != null)
+        {
+            obstacleCollider.size = Vector2.one;
+            obstacleCollider.enabled = true;
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        isOnDrag = false;
         previousParent = transform.parent;
         previousPosition = transform.position;
 
-        // Şimdilik test obstacle parent olmadan da çalışabilsin.
-        // Conveyor ve Inventory bağlandığında parent kontrolü aktif olarak kullanılacak.
         if (previousParent == null)
         {
-            Debug.Log("Obstacke cannot be without a parent!!");
+            Debug.Log("Obstacle cannot be without a parent!!");
             return;
-        }
-        else if (previousParent.TryGetComponent(out ConveyorBeltController belt))
-        {
-            Debug.Log("Obstacle was on the belt.");
-            belt.RemoveObstacleFromBelt(this);
         }
         else if (previousParent.TryGetComponent(out InventoryController inventory))
         {
             Debug.Log("Obstacle was on an inventory.");
             inventory.RemoveObstacleFromInventory();
+        }
+        else if (previousParent.TryGetComponent(out ConveyorBeltController belt))
+        {
+            Debug.Log("Obstacle was on the belt.");
+            belt.RemoveObstacleFromBelt(this);
         }
         else
         {
@@ -77,14 +103,8 @@ public class Obstacle : MonoBehaviour,
             data.heightInLanes * placementGrid.CellSize
         );
 
-        //if (previousParent != null)
-        //{
-
-        //}
-
         isOnDrag = true;
         transform.SetParent(null, true);
-
 
         // Drag sırasında obstacle kendi collider'ına takılmasın.
         obstacleCollider.enabled = false;
@@ -92,7 +112,8 @@ public class Obstacle : MonoBehaviour,
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!isOnDrag) {
+        if (!isOnDrag)
+        {
             return;
         }
 
@@ -101,6 +122,8 @@ public class Obstacle : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (!isOnDrag) return;
+
         Vector2 dropPosition = transform.position;
 
         Collider2D hitLane =
@@ -109,30 +132,42 @@ public class Obstacle : MonoBehaviour,
         if (hitLane != null)
         {
             Debug.Log("Lane detected: " + hitLane.name);
-        }
-        else
-        {
-            Debug.Log("No lane detected.");
-        }
-
-        if (hitLane != null)
-        {
             if (TryPlaceObstacle())
             {
                 PlaceOnGrid();
+
+                // Notify the belt using previousParent (since transform.parent is null while dragging)
+                if (previousParent != null && previousParent.TryGetComponent(out ConveyorBeltController belt))
+                {
+                    belt.ConfirmObstaclePlacement(this);
+                }
+
+                // Parent to the lane so it cannot be dragged again from the board
+                transform.SetParent(hitLane.transform, true);
 
                 obstacleCollider.enabled = true;
                 isOnDrag = false;
                 return;
             }
         }
+        else
+        {
+            Debug.Log("No lane detected.");
+        }
 
         Collider2D hitInventory =
             Physics2D.OverlapPoint(dropPosition, inventoryLayerMask);
 
         if (hitInventory != null)
-{
+        {
             Debug.Log("Obstacle was placed on an inventory.");
+
+            if (previousParent != null && previousParent.TryGetComponent(out ConveyorBeltController belt))
+            {
+                belt.ConfirmObstaclePlacement(this);
+            }
+
+            transform.SetParent(hitInventory.transform, true);
 
             obstacleCollider.enabled = true;
             isOnDrag = false;
@@ -220,8 +255,16 @@ public class Obstacle : MonoBehaviour,
 
     private void ReturnToPreviousPosition()
     {
-        transform.SetParent(previousParent, true);
-        transform.position = previousPosition;
+        // If it came from the belt, return it to the moving placeholder's position!
+        if (previousParent != null && previousParent.TryGetComponent(out ConveyorBeltController belt))
+        {
+            belt.ReturnObstacleToPlaceholder(this);
+        }
+        else
+        {
+            transform.SetParent(previousParent, true);
+            transform.position = previousPosition;
+        }
 
         spriteRenderer.sprite = data.conveyorSprite;
         visualTransform.localScale = Vector3.one;
