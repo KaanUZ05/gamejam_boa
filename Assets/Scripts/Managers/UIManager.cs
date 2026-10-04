@@ -63,15 +63,19 @@ public class UIManager : MonoBehaviour
     public void PageTransection(Page page)
     {
         currentPage = page;
-        menuPage.SetActive(page == Page.Menu);
-        settingsPage.SetActive(page == Page.Settings);
-        pausePage.SetActive(page == Page.Pause);
+        SetPage(menuPage, page == Page.Menu);
+        SetPage(settingsPage, page == Page.Settings);
+        SetPage(pausePage, page == Page.Pause);
         // Game page stays visible behind the pause page (frozen game)
-        gamePage.SetActive(page == Page.Game || page == Page.Pause);
-        transitionPage.SetActive(page == Page.Transition);
-        gameOverPage.SetActive(page == Page.GameOver);
+        SetPage(gamePage, page == Page.Game || page == Page.Pause);
+        SetPage(transitionPage, page == Page.Transition);
+        SetPage(gameOverPage, page == Page.GameOver);
     }
 
+    void SetPage(GameObject go, bool active)
+    {
+        if (go != null) go.SetActive(active);
+    }
     public void ShowGameOver(string winnerName, float p1Time, float p2Time)
     {
         winnerText.text = winnerName + " Wins!";
