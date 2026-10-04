@@ -100,4 +100,8 @@ public class Wisard : MonoBehaviour
 
         playerController.TakeDamage(obstacle.DamageAmount, this);
     }
+
+    public void PlayShootAnimation() {
+        _animator.SetTrigger("Shoot");
+    }
 }

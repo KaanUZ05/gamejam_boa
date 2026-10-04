@@ -214,6 +214,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        // aslo audio source nee to react.
+        AudioManager.Instance.PlayOrbSFX();
+
         // Orb her durumda rage verir.
         GainRage(1);
 
@@ -465,6 +468,9 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log(damagedWisard.name + " took " + amount + " damage. Remaining health: " + remainingWisardHealth);
 
+        // Audio source need to react.
+        AudioManager.Instance.PlayHurtSFX();
+
         if (remainingWisardHealth <= 0)
         {
             HandleWisardDeath(damagedWisard);
@@ -682,6 +688,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        currentWisard.PlayShootAnimation();
+
         rage -= 1;
 
         Obstacle target = FindClosestObstacleAhead();
@@ -690,6 +698,9 @@ public class PlayerController : MonoBehaviour
         {
             gamePlayController.RemoveObstacleFromBoard(target);
         }
+
+        // Audio manager need to react
+        AudioManager.Instance.PlayFireBallSFX();
 
         Debug.Log("Fireball used. Remaining rage: " + rage);
     }
@@ -705,6 +716,8 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
+
+        currentWisard.PlayShootAnimation();
 
         IReadOnlyList<Obstacle> obstacles =
             gamePlayController.GetActivePlacedObstacles();
