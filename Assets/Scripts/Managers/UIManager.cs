@@ -31,6 +31,7 @@ public class UIManager : MonoBehaviour
     public TMP_Text winnerText;         // WinnerTxt
     public TMP_Text player1Text;         // Player1
     public TMP_Text player2Text;         // Player2
+    public PlayerData playerData;        // same PlayerData asset as DataManager (total scores)
 
     // Day-night transition
     public SpriteRenderer backgroundImage;   // Background (scene object)
@@ -44,6 +45,7 @@ public class UIManager : MonoBehaviour
 
     Page currentPage;
     Page pageBeforeSettings;
+    bool continuePressed;
 
     void Awake()
     {
@@ -55,7 +57,7 @@ public class UIManager : MonoBehaviour
         if (backgroundImage != null) backgroundImage.sprite = dayBackground;
         PageTransection(Page.Menu);
         if (volumeSlider != null) volumeSlider.value = AudioListener.volume;   // keeps the slider in sync after a scene reload
-        UpdateRage(0);
+        UpdateRage(1);
         UpdateTimer(0f);
         UpdateScore(0);
     }
@@ -63,20 +65,32 @@ public class UIManager : MonoBehaviour
     public void PageTransection(Page page)
     {
         currentPage = page;
-        menuPage.SetActive(page == Page.Menu);
-        settingsPage.SetActive(page == Page.Settings);
-        pausePage.SetActive(page == Page.Pause);
+        SetPage(menuPage, page == Page.Menu);
+        SetPage(settingsPage, page == Page.Settings);
+        SetPage(pausePage, page == Page.Pause);
         // Game page stays visible behind the pause page (frozen game)
-        gamePage.SetActive(page == Page.Game || page == Page.Pause);
-        transitionPage.SetActive(page == Page.Transition);
-        gameOverPage.SetActive(page == Page.GameOver);
+        SetPage(gamePage, page == Page.Game || page == Page.Pause);
+        SetPage(transitionPage, page == Page.Transition);
+        SetPage(gameOverPage, page == Page.GameOver);
     }
 
-    public void ShowGameOver(string winnerName, float p1Time, float p2Time)
+    void SetPage(GameObject go, bool active)
     {
-        winnerText.text = winnerName + " Wins!";
-        player1Text.text = "Player 1: " + p1Time.ToString("F1") + " s";
-        player2Text.text = "Player 2: " + p2Time.ToString("F1") + " s";
+        if (go != null) go.SetActive(active);
+    }
+
+    // Shows the total score (sum of survival times of all rounds) of both players
+    public void ShowGameOver()
+    {
+        float p1Total = playerData.Player1Score;
+        float p2Total = playerData.Player2Score;
+
+        if (p1Total > p2Total) winnerText.text = "Player 1 Wins!";
+        else if (p2Total > p1Total) winnerText.text = "Player 2 Wins!";
+        else winnerText.text = "Draw!";
+
+        player1Text.text = "Player 1: " + p1Total.ToString("F1") + " s";
+        player2Text.text = "Player 2: " + p2Total.ToString("F1") + " s";
         PageTransection(Page.GameOver);
     }
 
@@ -138,6 +152,12 @@ public class UIManager : MonoBehaviour
 #endif
     }
 
+    // Continue button on the transition page: starts the next round
+    public void ContinueRound()
+    {
+        continuePressed = true;
+    }
+
     public void PlayRoundTransition(bool toNight)
     {
         StartCoroutine(TransitionRoutine(toNight));
@@ -159,8 +179,9 @@ public class UIManager : MonoBehaviour
         // Rest of the animation
         yield return new WaitForSecondsRealtime(Mathf.Max(0f, transitionDuration - backgroundSwapTime));
 
-        // Wait for Space
-        while (!Input.GetKeyDown(KeyCode.Space))
+        // Wait for Space or the continue button (presses during the animation are ignored)
+        continuePressed = false;
+        while (!continuePressed && !Input.GetKeyDown(KeyCode.Space))
             yield return null;
 
         PageTransection(Page.Game);
