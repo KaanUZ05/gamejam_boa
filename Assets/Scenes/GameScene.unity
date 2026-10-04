@@ -302,7 +302,7 @@ MonoBehaviour:
   ObstacklePrefab: {fileID: 1326047639595442256, guid: 940bae1bb275d5a498a9ec2ab3ae1360, type: 3}
   ObstaclePoolContent: {fileID: 1293280046}
   initialObstaclePoolCount: 15
-  WisardPrefab: {fileID: 2961584224593006321, guid: 1a735bb360521444a8a41855693eaa5b, type: 3}
+  WisardPrefab: {fileID: 588611605426569686, guid: 1a735bb360521444a8a41855693eaa5b, type: 3}
   WisardPoolContent: {fileID: 1694511542}
   initialWisardPoolCount: 15
   wildWisardSpawnInterval: 8
@@ -1707,6 +1707,9 @@ MonoBehaviour:
   maxWisardQuota: 2
   wisardLifeSpan: 30
   laneMoveDuration: 0.2
+  maxHealth: 3
+  invulnerabilityDuration: 2
+  currentHealth: 0
   rage: 0
 --- !u!4 &1603098880
 Transform:

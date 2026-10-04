@@ -1,24 +1,70 @@
+using System;
 using UnityEngine;
 
 public class Wisard : MonoBehaviour
 {
-    private WisardData data;
-    public SpriteRenderer SpriteRenderer =>
-        GetComponent<SpriteRenderer>();
+    [SerializeField] private WisardData data;
+    public SpriteRenderer spriteRenderer;
+    public Collider2D wisardCollider;
 
-    public Collider2D Collider =>
-        GetComponent<Collider2D>();
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Awake()
     {
+        if (wisardCollider == null)
+        {
+            wisardCollider = GetComponent<Collider2D>();
+        }
 
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnEnable()
     {
+        Border.OnWisardHitBoundary += HandleWisardHitBoundary;
+    }
 
+    private void OnDisable()
+    {
+        Border.OnWisardHitBoundary -= HandleWisardHitBoundary;
+    }
+
+    private void Start()
+    {
+        if (data != null)
+        {
+            Initialize(data);
+        }
+    }
+
+    public void Initialize(WisardData wisardData)
+    {
+        this.data = wisardData;
+        transform.localScale = Vector3.one;
+
+        if (wisardCollider != null)
+        {
+            wisardCollider.enabled = true;
+        }
+    }
+
+    private void HandleWisardHitBoundary(Wisard hitWisard)
+    {
+        // Only react if THIS specific Wisard instance is the one that hit the border
+        if (hitWisard != this) return;
+
+        ResetWisard();
+    }
+
+    public void ResetWisard()
+    {
+        transform.localScale = Vector3.one;
+
+        if (wisardCollider != null)
+        {
+            wisardCollider.enabled = true;
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

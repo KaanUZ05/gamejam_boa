@@ -419,8 +419,8 @@ public class PlayerController : MonoBehaviour
             yield break;
         }
 
-        SpriteRenderer renderer = damagedWisard.SpriteRenderer;
-        Collider2D wisardCollider = damagedWisard.Collider;
+        SpriteRenderer renderer = damagedWisard.spriteRenderer;
+        Collider2D wisardCollider = damagedWisard.wisardCollider;
 
         if (renderer == null)
         {
