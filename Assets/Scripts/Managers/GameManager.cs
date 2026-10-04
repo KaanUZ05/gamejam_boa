@@ -38,10 +38,30 @@ public class GameManager : MonoBehaviour
         StartGamePlay();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnDestroy()
     {
+        if (gamePlayController != null)
+        {
+            gamePlayController.RoundFinished -= HandleRoundFinished;
+        }
+    }
 
+    public float GetCurrentSpeed()
+    {
+        if (gamePlayController == null || !gamePlayController.IsRoundActive())
+        {
+            return 0f;
+        }
+
+        float survivalTime = gamePlayController.GetCurrentSurvivalTime();
+        float progress = 1f;
+
+        if (timeToMaxSpeed > 0f)
+        {
+            progress = Mathf.Clamp01(survivalTime / timeToMaxSpeed);
+        }
+
+        return Mathf.Lerp(startSpeed, maxSpeed, progress);
     }
 
     public int GetCurrentRoundNum()
@@ -71,7 +91,10 @@ public class GameManager : MonoBehaviour
     public void StartGamePlay()
     {
         roundNum = 1;
-        DataManager.Instance.ResetPlayerData();
+        if (DataManager.Instance != null)
+        {
+            DataManager.Instance.ResetPlayerData();
+        }
         gamePlayController.StartRound(roundNum);
     }
 }

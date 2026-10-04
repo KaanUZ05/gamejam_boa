@@ -90,12 +90,12 @@ public class PlayerController : MonoBehaviour
 
         if (Keyboard.current.upArrowKey.wasPressedThisFrame)
         {
-            MoveCurrentWisard(-1); // Move 1 lane up
+            MoveCurrentWisard(-1); // Move 1 lane up (towards index 0)
         }
 
         if (Keyboard.current.downArrowKey.wasPressedThisFrame)
         {
-            MoveCurrentWisard(1); // Move 1 lane down
+            MoveCurrentWisard(1); // Move 1 lane down (towards lanes.Length - 1)
         }
     }
 
@@ -208,6 +208,7 @@ public class PlayerController : MonoBehaviour
         // Inform GamePlayController that this wild Wisard is now controlled by PlayerController
         WildWisardSpelled?.Invoke(newWisard);
 
+        // Reparent from MovingBoardContent to PlayerController so it stops scrolling left
         newWisard.transform.SetParent(transform, true);
         wisardsList.Add(newWisard);
 
@@ -219,13 +220,13 @@ public class PlayerController : MonoBehaviour
             int currentLaneIdx = wisardLaneIndex[currentWisard];
             if (targetLaneIdx == currentLaneIdx)
             {
-                if (currentLaneIdx + 1 < lanes.Length)
+                if (currentLaneIdx - 1 >= 0)
                 {
-                    targetLaneIdx = currentLaneIdx + 1; // 1 lane up
+                    targetLaneIdx = currentLaneIdx - 1; // 1 lane up
                 }
-                else if (currentLaneIdx - 1 >= 0)
+                else if (currentLaneIdx + 1 < lanes.Length)
                 {
-                    targetLaneIdx = currentLaneIdx - 1; // 1 lane down
+                    targetLaneIdx = currentLaneIdx + 1; // 1 lane down
                 }
             }
         }

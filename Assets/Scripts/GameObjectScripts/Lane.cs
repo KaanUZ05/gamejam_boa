@@ -6,8 +6,8 @@ public class Lane : MonoBehaviour
     public int laneIndex;
 
     [Header("Lane Positions")]
-    public Transform WisarPosition;     // Where controlled/spelled Wisards stand (middle lane on round start)
-    public Transform WisardSpawnPoint;  // Where wild Wisards spawn randomly during the round
+    public Transform WisarPosition;     // Stationary: Where controlled/spelled Wisards stand
+    public Transform WisardSpawnPoint;  // Stationary: Where wild Wisards spawn randomly
 
     [SerializeField] private Collider2D SpellArea;
 
@@ -57,6 +57,7 @@ public class Lane : MonoBehaviour
     {
         if (other.TryGetComponent(out Wisard wisard))
         {
+            Debug.Log("Wisard dedected on the spelable area");
             WisardEnteredZone?.Invoke(wisard, this);
         }
     }

@@ -34,11 +34,24 @@ public class Obstacle : MonoBehaviour,
 
     private bool isOnDrag = false;
 
+    // Informs GamePlayController to parent this obstacle to MovingBoardContent
+    public static Action<Obstacle> ObstaclePlacedOnBoard;
+
     private void Awake()
     {
         mainCamera = Camera.main;
         obstacleCollider = GetComponent<BoxCollider2D>();
         placementGrid = FindFirstObjectByType<PlacementGrid>();
+    }
+
+    private void OnEnable()
+    {
+        Border.OnObstacleHitBoundary += HandleObstacleHitBoundary;
+    }
+
+    private void OnDisable()
+    {
+        Border.OnObstacleHitBoundary -= HandleObstacleHitBoundary;
     }
 
     private void Start()
@@ -82,6 +95,37 @@ public class Obstacle : MonoBehaviour,
         }
     }
 
+    private void HandleObstacleHitBoundary(Obstacle hitObstacle)
+    {
+        // Make sure only the specific obstacle that hit the border resets itself
+        if (hitObstacle != this) return;
+
+        ResetObstacleState();
+    }
+
+    public void ResetObstacleState()
+    {
+        isOnDrag = false;
+
+        if (data != null && spriteRenderer != null)
+        {
+            spriteRenderer.sprite = data.conveyorSprite;
+        }
+
+        transform.localScale = Vector3.one;
+
+        if (visualTransform != null)
+        {
+            visualTransform.localScale = Vector3.one;
+        }
+
+        if (obstacleCollider != null)
+        {
+            obstacleCollider.size = Vector2.one;
+            obstacleCollider.enabled = true;
+        }
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         isOnDrag = false;
@@ -105,6 +149,8 @@ public class Obstacle : MonoBehaviour,
         }
         else
         {
+            // Once placed on the board, its parent is MovingBoardContent, 
+            // so it cannot be picked up or dragged again.
             Debug.LogError("Wrong hierarchy!!!");
             return;
         }
@@ -155,11 +201,11 @@ public class Obstacle : MonoBehaviour,
                     belt.ConfirmObstaclePlacement(this);
                 }
 
-                // Parent to the lane so it cannot be dragged again from the board
-                transform.SetParent(hitLane.transform, true);
-
                 obstacleCollider.enabled = true;
                 isOnDrag = false;
+
+                // GamePlayController listens to this and sets parent to MovingBoardContent
+                ObstaclePlacedOnBoard?.Invoke(this);
                 return;
             }
         }
@@ -256,13 +302,6 @@ public class Obstacle : MonoBehaviour,
             snappedPosition.x,
             snappedPosition.y,
             0f
-        );
-
-        placementGrid.OccupyCells(
-            startLane,
-            startColumn,
-            data.widthInCells,
-            data.heightInLanes
         );
     }
 
