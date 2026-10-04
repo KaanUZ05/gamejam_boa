@@ -460,7 +460,7 @@ public class PlayerController : MonoBehaviour
 
         wisardHealths[damagedWisard] -= amount;
         UIManager.Instance.UpdateHealth(wisardHealths[damagedWisard]);
-        rage += amount;
+        
 
         int remainingWisardHealth = wisardHealths[damagedWisard];
         SyncInspectorHealth();
@@ -602,6 +602,8 @@ public class PlayerController : MonoBehaviour
         }
 
         rage = Mathf.Clamp(rage + amount, 0, maxRage);
+      
+        UIManager.Instance.UpdateRage(rage);
 
         Debug.Log("Player rage: " + rage);
     }
@@ -685,6 +687,8 @@ public class PlayerController : MonoBehaviour
         }
 
         rage -= 1;
+        
+        UIManager.Instance.UpdateRage(rage);
 
         Obstacle target = FindClosestObstacleAhead();
 
@@ -763,6 +767,8 @@ public class PlayerController : MonoBehaviour
         }
 
         rage -= 3;
+
+        UIManager.Instance.UpdateRage(rage);
 
         DestroyAllObstaclesInCurrentLane();
 
