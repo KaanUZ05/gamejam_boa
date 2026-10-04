@@ -139,14 +139,18 @@ public class ConveyorBeltController : MonoBehaviour
         spawnPos.z = 0f;
         nextObstacle.transform.position = spawnPos;
 
-        nextObstacle.gameObject.SetActive(true);
-
+        // ÖNCE yeni data'yı ver.
         if (DataManager.Instance != null)
         {
             int selectedId = GetWeightedObstacleId();
-            ObstacleData data = DataManager.Instance.GetObstacleDataById(selectedId);
+            ObstacleData data =
+                DataManager.Instance.GetObstacleDataById(selectedId);
+
             nextObstacle.Initialize(data);
         }
+
+        // EN SON görünür yap.
+        nextObstacle.gameObject.SetActive(true);
 
         ActiveObstacles.Add(nextObstacle);
     }
