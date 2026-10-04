@@ -131,6 +131,10 @@ PrefabInstance:
       propertyPath: laneIndex
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 948168738827674466, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
+      propertyPath: laneSprite
+      value: 
+      objectReference: {fileID: 3847342594457306509, guid: 89cc151f8b658164da4f88bfbe15b89c, type: 3}
     - target: {fileID: 3016075256532327665, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
       propertyPath: m_Name
       value: Lane_3
@@ -301,6 +305,7 @@ MonoBehaviour:
   WisardPoolContent: {fileID: 1694511542}
   initialWisardPoolCount: 0
   conveyorBeltController: {fileID: 1377861023}
+  lanes: {fileID: 0}
   timeToMaxDifficulty: 90
   currentSurvivalTime: 0
 --- !u!4 &256329769
@@ -1067,14 +1072,6 @@ PrefabInstance:
       value: Lane_0
       objectReference: {fileID: 0}
     - target: {fileID: 6082282112006297879, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 6082282112006297879, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 6082282112006297879, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -1113,14 +1110,6 @@ PrefabInstance:
     - target: {fileID: 6082282112006297879, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8534947068941856968, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
-      propertyPath: m_Color.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8534947068941856968, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
-      propertyPath: m_Color.r
-      value: 0.022633314
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1264,6 +1253,10 @@ PrefabInstance:
       propertyPath: laneIndex
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 948168738827674466, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
+      propertyPath: laneSprite
+      value: 
+      objectReference: {fileID: -5703817184034952131, guid: b29ee4fe0accd9c4186f38a44fba7c60, type: 3}
     - target: {fileID: 3016075256532327665, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
       propertyPath: m_Name
       value: Lane_2
@@ -1382,7 +1375,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1377861020}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -1424,7 +1417,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 1, b: 0.2129209, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1591,7 +1584,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 1, b: 0.2007165, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1749,6 +1742,10 @@ PrefabInstance:
       propertyPath: laneIndex
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 948168738827674466, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
+      propertyPath: laneSprite
+      value: 
+      objectReference: {fileID: -6914297075314986106, guid: 02607b963f757b947ab46c4342c8b20a, type: 3}
     - target: {fileID: 3016075256532327665, guid: 13d5d1694e843de40ab315219bef0744, type: 3}
       propertyPath: m_Name
       value: Lane_1

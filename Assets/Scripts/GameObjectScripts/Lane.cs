@@ -1,8 +1,16 @@
+using System;
 using UnityEngine;
 
 public class Lane : MonoBehaviour
 {
     public int laneIndex;
+
+    [SerializeField] private Transform WisarPosition;
+    [SerializeField] private Collider2D SpellArea;
+
+    // to inform the PlayerController
+    public static Action<Wisard, Lane> WisardEnteredZone;
+    public static Action<Wisard, Lane> WisardExitedZone;
 
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Transform visualTransform;
@@ -40,5 +48,21 @@ public class Lane : MonoBehaviour
             laneHeight / spriteSize.y,
             1f
         );
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.TryGetComponent(out Wisard wisard))
+        {
+            WisardEnteredZone?.Invoke(wisard, this);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.TryGetComponent(out Wisard wisard))
+        {
+            WisardExitedZone?.Invoke(wisard, this);
+        }
     }
 }

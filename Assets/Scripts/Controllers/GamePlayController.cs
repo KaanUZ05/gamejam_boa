@@ -19,6 +19,9 @@ public class GamePlayController : MonoBehaviour
     [Header("Controllers")]
     [SerializeField] private ConveyorBeltController conveyorBeltController;
 
+    [Header("Lanes")]
+    [SerializeField] private Lane lanes;
+
     [Header("Difficulty Scaling (For Conveyor Belt)")]
     [Tooltip("Time in seconds when obstacle spawning reaches 100% maximum difficulty.")]
     [SerializeField] private float timeToMaxDifficulty = 90f;
