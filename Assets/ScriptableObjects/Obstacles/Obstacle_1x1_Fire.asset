@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 581db1c208f11a347af7d4050fa9ea5a, type: 3}
-  m_Name: Obstacle_2x2
+  m_Name: Obstacle_1x1_Fire
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleData
-  obstacleId: 3
-  widthInCells: 2
-  heightInLanes: 2
-  conveyorSprite: {fileID: -764677405604867879, guid: 47f76914708f2495785846cc426f4948, type: 3}
-  obstacleSprite: {fileID: 8846996422216661256, guid: f38605379ed1ab54984397883b1fe02e, type: 3}
+  obstacleId: 6
+  widthInCells: 1
+  heightInLanes: 1
+  conveyorSprite: {fileID: 491038255255991763, guid: 51a66202c6b20464a8eefc3e28425ae8, type: 3}
+  obstacleSprite: {fileID: 7545289684416081078, guid: 82d4796995e8447498724a27646e4b55, type: 3}
   obstacleLevel: 0
-  damageAmount: 1
+  damageAmount: 3

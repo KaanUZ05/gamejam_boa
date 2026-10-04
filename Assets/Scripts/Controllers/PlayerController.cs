@@ -459,8 +459,6 @@ public class PlayerController : MonoBehaviour
         }
 
         wisardHealths[damagedWisard] -= amount;
-        UIManager.Instance.UpdateHealth(wisardHealths[damagedWisard]);
-        
 
         int remainingWisardHealth = wisardHealths[damagedWisard];
         SyncInspectorHealth();
@@ -579,6 +577,12 @@ public class PlayerController : MonoBehaviour
         else
         {
             currentHealth = 0;
+        }
+
+        // Hearts on the HUD always show the controlled Wisard's health
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateHealth(currentHealth);
         }
     }
 

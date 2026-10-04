@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 581db1c208f11a347af7d4050fa9ea5a, type: 3}
-  m_Name: Obstacle_2x2
+  m_Name: Obstacle_1x1_Ice
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleData
-  obstacleId: 3
-  widthInCells: 2
-  heightInLanes: 2
-  conveyorSprite: {fileID: -764677405604867879, guid: 47f76914708f2495785846cc426f4948, type: 3}
-  obstacleSprite: {fileID: 8846996422216661256, guid: f38605379ed1ab54984397883b1fe02e, type: 3}
+  obstacleId: 5
+  widthInCells: 1
+  heightInLanes: 1
+  conveyorSprite: {fileID: -9196488197574965294, guid: 0430628214b07451c88dd58b3a35f7aa, type: 3}
+  obstacleSprite: {fileID: -6772187545527374908, guid: 3da04ee3ca9e44fad912cb3bc331e669, type: 3}
   obstacleLevel: 0
-  damageAmount: 1
+  damageAmount: 2
