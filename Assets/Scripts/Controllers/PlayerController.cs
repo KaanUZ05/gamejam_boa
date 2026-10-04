@@ -214,6 +214,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        // aslo audio source nee to react.
+        AudioManager.Instance.PlayOrbSFX();
+
         // Orb her durumda rage verir.
         GainRage(1);
 
@@ -227,6 +230,9 @@ public class PlayerController : MonoBehaviour
 
         // Yer varsa normal şekilde Wisard'ı bağla.
         WildWisardSpelled?.Invoke(newWisard);
+
+        // show the pop up
+        UIManager.Instance.PlayPopup();
 
         // Reparent from MovingBoardContent to PlayerController so it stops scrolling left
         RestoreWisardVisualAndCollider(newWisard);
@@ -354,6 +360,8 @@ public class PlayerController : MonoBehaviour
         int nextIndex = (index + 1) % wisardsList.Count;
         currentWisard = wisardsList[nextIndex];
         SyncInspectorHealth();
+
+        UIManager.Instance.UpdateHealth(currentWisard.GetHealth());
     }
 
     private void MoveCurrentWisard(int direction)
@@ -464,6 +472,9 @@ public class PlayerController : MonoBehaviour
         SyncInspectorHealth();
 
         Debug.Log(damagedWisard.name + " took " + amount + " damage. Remaining health: " + remainingWisardHealth);
+
+        // Audio source need to react.
+        AudioManager.Instance.PlayHurtSFX();
 
         if (remainingWisardHealth <= 0)
         {
@@ -690,6 +701,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        currentWisard.PlayShootAnimation();
+
         rage -= 1;
         
         UIManager.Instance.UpdateRage(rage);
@@ -700,6 +713,9 @@ public class PlayerController : MonoBehaviour
         {
             gamePlayController.RemoveObstacleFromBoard(target);
         }
+
+        // Audio manager need to react
+        AudioManager.Instance.PlayFireBallSFX();
 
         Debug.Log("Fireball used. Remaining rage: " + rage);
     }
@@ -715,6 +731,8 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
+
+        currentWisard.PlayShootAnimation();
 
         IReadOnlyList<Obstacle> obstacles =
             gamePlayController.GetActivePlacedObstacles();

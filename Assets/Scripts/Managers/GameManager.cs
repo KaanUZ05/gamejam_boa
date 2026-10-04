@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -34,10 +35,22 @@ public class GameManager : MonoBehaviour
 
         gamePlayController.RoundFinished += HandleRoundFinished;
 
+        // Playing GameScene directly in the editor must also bring in its UI.
+        if (UIManager.Instance == null && !SceneManager.GetSceneByPath(UIManager.MenuScenePath).isLoaded)
+        {
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                if (root.name == "Main Camera" || root.name == "Global Light 2D" || root.name == "EventSystem")
+                    root.SetActive(false);
+            }
+            SceneManager.LoadSceneAsync(UIManager.MenuScenePath, LoadSceneMode.Additive);
+        }
+
     }
 
     private void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         if (gamePlayController != null)
         {
             gamePlayController.RoundFinished -= HandleRoundFinished;
@@ -89,6 +102,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGamePlay()
     {
+        AudioManager.Instance.PlayGameBgMusic();
         roundNum = 1;
         if (DataManager.Instance != null)
         {

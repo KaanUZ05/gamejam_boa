@@ -16,6 +16,7 @@ MonoBehaviour:
   widthInCells: 1
   heightInLanes: 2
   conveyorSprite: {fileID: 6864800841549711242, guid: 11b024de582a144329a62572b1b34837, type: 3}
+  conveyorSprite: {fileID: 6864800841549711242, guid: df36c7c13289a9b418288ddcd29aa8a3, type: 3}
   obstacleSprite: {fileID: 1431980212519641259, guid: 51126248f23872e408a1d375206e7eee, type: 3}
   obstacleLevel: 0
   damageAmount: 1

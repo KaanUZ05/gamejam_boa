@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b29ee4fe0accd9c4186f38a44fba7c60
+guid: c262752eff2f0894fa2f0037ae2d799e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5703817184034952131
-    second: roadvar2_0
+      213: -1687894342603208438
+    second: mor 12 kare blok yanyana_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Lane_2_Sprite
+      name: 1x2_Closed
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 480
-        height: 35
+        x: 335
+        y: 484
+        width: 385
+        height: 196
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d3ce3d1cd78f7d0b0800000000000000
-      internalID: -5703817184034952131
+      spriteID: a098ebac9056398e0800000000000000
+      internalID: -1687894342603208438
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 99d34127a189e5246a8173e7110d440e
+    spriteID: bfaa8868c329c1545a1ea78a5c031cf4
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Lane_2_Sprite: -5703817184034952131
+      1x2_Closed: -1687894342603208438
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

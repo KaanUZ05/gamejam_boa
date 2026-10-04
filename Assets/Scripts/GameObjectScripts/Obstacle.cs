@@ -34,11 +34,15 @@ public class Obstacle : MonoBehaviour,
     }
 
     [SerializeField] private ObstacleData data;
-    [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private Transform visualTransform;
+    [SerializeField] private SpriteRenderer closedSpriteRenderer;
+    [SerializeField] private SpriteRenderer openSpriteRenderer;
+    [SerializeField] private Transform openVisualTransform;
     [SerializeField] private LayerMask laneLayerMask;
     [SerializeField] private LayerMask inventoryLayerMask;
-
+    [SerializeField] private Transform closedVisualTransform;
+    [Header("Conveyor Visual Size")]
+    [SerializeField] private float conveyorMaxWidth = 0.9f;
+    [SerializeField] private float conveyorMaxHeight = 0.9f;
     private bool isOnDrag = false;
 
     // Informs GamePlayController to parent this obstacle to MovingBoardContent
@@ -87,13 +91,17 @@ public class Obstacle : MonoBehaviour,
         }
 
         this.data = data;
-        spriteRenderer.sprite = data.conveyorSprite;
+
         transform.localScale = Vector3.one;
 
-        if (visualTransform != null)
-        {
-            visualTransform.localScale = Vector3.one;
-        }
+        ApplyClosedVisual();
+
+        openSpriteRenderer.sprite = data.obstacleSprite;
+
+        closedSpriteRenderer.gameObject.SetActive(true);
+        openSpriteRenderer.gameObject.SetActive(false);
+
+        openVisualTransform.localScale = Vector3.one;
 
         if (obstacleCollider != null)
         {
@@ -118,17 +126,27 @@ public class Obstacle : MonoBehaviour,
         placedStartLane = -1;
         placedStartColumn = -1;
 
-        if (data != null && spriteRenderer != null)
+        if (data != null)
         {
-            spriteRenderer.sprite = data.conveyorSprite;
+            if (closedSpriteRenderer != null)
+            {
+                ApplyClosedVisual();
+                closedSpriteRenderer.gameObject.SetActive(true);
+            }
+
+            if (openSpriteRenderer != null)
+            {
+                openSpriteRenderer.sprite = data.obstacleSprite;
+                openSpriteRenderer.gameObject.SetActive(false);
+            }
+        }
+
+        if (openVisualTransform != null)
+        {
+            openVisualTransform.localScale = Vector3.one;
         }
 
         transform.localScale = Vector3.one;
-
-        if (visualTransform != null)
-        {
-            visualTransform.localScale = Vector3.one;
-        }
 
         if (obstacleCollider != null)
         {
@@ -383,9 +401,10 @@ public class Obstacle : MonoBehaviour,
             transform.SetParent(previousParent, true);
             transform.position = previousPosition;
         }
+        closedSpriteRenderer.gameObject.SetActive(true);
+        openSpriteRenderer.gameObject.SetActive(false);
 
-        spriteRenderer.sprite = data.conveyorSprite;
-        visualTransform.localScale = Vector3.one;
+        openVisualTransform.localScale = Vector3.one;
 
         obstacleCollider.size = Vector2.one; // extra security
     }
@@ -400,12 +419,18 @@ public class Obstacle : MonoBehaviour,
 
         if (data.obstacleSprite == null)
         {
-            Debug.LogError("Obstacle Sprite is null for obstacle data: " + data.name);
+            Debug.LogError(
+                "Obstacle Sprite is null for obstacle data: " + data.name
+            );
             return;
         }
-        spriteRenderer.sprite = data.obstacleSprite;
 
-        Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
+        closedSpriteRenderer.gameObject.SetActive(false);
+        openSpriteRenderer.gameObject.SetActive(true);
+
+        openSpriteRenderer.sprite = data.obstacleSprite;
+
+        Vector2 spriteSize = openSpriteRenderer.sprite.bounds.size;
 
         float targetWidth =
             data.widthInCells * placementGrid.CellSize;
@@ -413,10 +438,45 @@ public class Obstacle : MonoBehaviour,
         float targetHeight =
             data.heightInLanes * placementGrid.CellSize;
 
-        visualTransform.localScale = new Vector3(
+        openVisualTransform.localScale = new Vector3(
             targetWidth / spriteSize.x,
             targetHeight / spriteSize.y,
             1f
         );
+    }
+
+    private void ApplyClosedVisual()
+    {
+        if (data == null || data.conveyorSprite == null)
+        {
+            return;
+        }
+
+        closedSpriteRenderer.sprite = data.conveyorSprite;
+
+        Vector2 spriteSize =
+            closedSpriteRenderer.sprite.bounds.size;
+
+        if (spriteSize.x <= 0f || spriteSize.y <= 0f)
+        {
+            return;
+        }
+
+        float scaleX =
+            conveyorMaxWidth / spriteSize.x;
+
+        float scaleY =
+            conveyorMaxHeight / spriteSize.y;
+
+        // Aspect ratio bozulmasın.
+        float uniformScale =
+            Mathf.Min(scaleX, scaleY);
+
+        closedVisualTransform.localScale =
+            new Vector3(
+                uniformScale,
+                uniformScale,
+                1f
+            );
     }
 }

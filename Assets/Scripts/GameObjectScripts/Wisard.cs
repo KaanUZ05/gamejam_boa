@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 public class Wisard : MonoBehaviour
@@ -99,5 +100,14 @@ public class Wisard : MonoBehaviour
         }
 
         playerController.TakeDamage(obstacle.DamageAmount, this);
+    }
+
+    public void PlayShootAnimation() {
+        _animator.SetTrigger("Shoot");
+    }
+
+    public int GetHealth() {
+        if (data == null) { return 0; }
+        return data.health;
     }
 }

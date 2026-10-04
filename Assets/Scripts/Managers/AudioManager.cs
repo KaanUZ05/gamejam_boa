@@ -1,23 +1,79 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
-    private AudioClip soundEffect;
-    private AudioClip bgMusic;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public static AudioManager Instance { get; private set; }
+
+    [Header("Mixer Routing")]
+    public AudioMixer mainMixer;
+
+    [Header("Audio Sources")]
+    public AudioSource musicSource;
+    public AudioSource sfxSource;
+
+    [SerializeField] private AudioClip gameOverMusic;
+    [SerializeField] private AudioClip gamePlayBgMusic;
+    [SerializeField] private AudioClip menuBgMusic;
+    [SerializeField] private AudioClip fireBallSFX;
+    [SerializeField] private AudioClip hurtSFX;
+    [SerializeField] private AudioClip orbSFX;
+
+    private void Awake()
     {
-        
+        // Enforce Singleton pattern and persistence
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        
+        PlayMenuBgMusic();
     }
 
-    public void PlaySFX()
+    public void PlayGameBgMusic()
     {
-        
+        if (musicSource.clip == gamePlayBgMusic) return; // Prevent restarting the same track
+
+        musicSource.clip = gamePlayBgMusic;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    public void PlayGameOverBgMusic()
+    {
+        if (musicSource.clip == gameOverMusic) return; // Prevent restarting the same track
+
+        musicSource.clip = gameOverMusic;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    public void PlayMenuBgMusic() {
+        if (musicSource.clip == menuBgMusic) return; // Prevent restarting the same track
+
+        musicSource.clip = menuBgMusic;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    public void PlayOrbSFX() {
+        sfxSource.PlayOneShot(orbSFX);
+    }
+
+    public void PlayHurtSFX()
+    {
+        sfxSource.PlayOneShot(hurtSFX);
+    }
+
+    public void PlayFireBallSFX()
+    {
+        sfxSource.PlayOneShot(fireBallSFX);
     }
 }

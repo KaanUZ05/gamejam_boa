@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 230f8cdb91bd384468fdf862657c4e03
+guid: 78c64779ea2b8de479bd653b6d1bc9ba
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3258034728650443734
-    second: top road_0
+      213: -2287664289882547892
+    second: mor 11 kare blok_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Lane_0_Sprite
+      name: 1x1_Closed
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 480
-        height: 36
+        x: 9
+        y: 40
+        width: 58
+        height: 57
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6db881be25dd63d20800000000000000
-      internalID: 3258034728650443734
+      spriteID: c49543ce2759040e0800000000000000
+      internalID: -2287664289882547892
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 18d5ec435ecbdbe46b7d43c9c46a312f
+    spriteID: 535c33947e469234aac0b054a7b94650
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Lane_0_Sprite: 3258034728650443734
+      1x1_Closed: -2287664289882547892
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -5,12 +5,17 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.Video; // Added for VideoPlayer
 using Unity.VisualScripting;
 
 public enum Page { Game, Transition, GameOver, Menu, Settings, Pause }
 
+[DefaultExecutionOrder(-1000)]
 public class UIManager : MonoBehaviour
 {
+    internal const string MenuScenePath = "Assets/Scenes/MenuScene.unity";
+    const string GameScenePath = "Assets/Scenes/GameScene.unity";
+
     public static UIManager Instance;
 
     // Pages
@@ -27,11 +32,16 @@ public class UIManager : MonoBehaviour
     public Image[] rageFires;            // Fire images (3)
     public Image[] hearts;               // Heart images (3)
 
+    // Popup Alert (Twitch-style video overlay)
+    [Header("Popup Alert")]
+    public GameObject popupObject;       // RawImage GameObject inside GamePlayCanvas
+    public VideoPlayer popupVideoPlayer; // VideoPlayer component
+
     // Settings
     public Slider volumeSlider;          // Volume slider on the settings page
 
     // Game over
-    public TMP_Text winnerText;         // WinnerTxt
+    public TMP_Text winnerText;          // WinnerTxt
     public TMP_Text player1Text;         // Player1
     public TMP_Text player2Text;         // Player2
     public PlayerData playerData;        // same PlayerData asset as DataManager (total scores)
@@ -49,14 +59,29 @@ public class UIManager : MonoBehaviour
     Page currentPage;
     Page pageBeforeSettings;
     bool continuePressed;
+    bool startingGame;
 
     void Awake()
     {
         Instance = this;
+        // This scene renders screen-space UI; its global light is never needed.
+        foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            if (root.name == "Global Light 2D") root.SetActive(false);
+        if (settingsPage == null && menuPage != null)
+            SettingsPageBuilder.Create(this);
+    }
+
+    void OnDestroy()
+    {
+        if (popupVideoPlayer != null)
+            popupVideoPlayer.loopPointReached -= OnPopupVideoFinished;
+
+        if (Instance == this) Instance = null;
     }
 
     void Start()
     {
+        ConfigureLoadedScenes();
         if (backgroundImage != null) backgroundImage.sprite = dayBackground;
         PageTransection(Page.Menu);
         if (volumeSlider != null) volumeSlider.value = AudioListener.volume;   // keeps the slider in sync after a scene reload
@@ -64,6 +89,37 @@ public class UIManager : MonoBehaviour
         UpdateHealth(3);
         UpdateTimer(0f);
         UpdateScore(0);
+
+        // Initialize Popup Alert
+        if (popupObject != null)
+            popupObject.SetActive(false);
+
+        if (popupVideoPlayer != null)
+            popupVideoPlayer.loopPointReached += OnPopupVideoFinished;
+    }
+
+    // Call this from anywhere via: UIManager.Instance.PlayPopup();
+    // Or pass a specific clip: UIManager.Instance.PlayPopup(customClip);
+    public void PlayPopup(VideoClip customClip = null)
+    {
+        if (popupObject == null || popupVideoPlayer == null) return;
+
+        if (customClip != null)
+            popupVideoPlayer.clip = customClip;
+
+        // Clear the previous frame from the RenderTexture so it doesn't flash old frames
+        if (popupVideoPlayer.targetTexture != null)
+            popupVideoPlayer.targetTexture.Release();
+
+        popupObject.SetActive(true);
+        popupVideoPlayer.Stop();
+        popupVideoPlayer.Play();
+    }
+
+    private void OnPopupVideoFinished(VideoPlayer vp)
+    {
+        if (popupObject != null)
+            popupObject.SetActive(false);
     }
 
     public void PageTransection(Page page)
@@ -77,7 +133,6 @@ public class UIManager : MonoBehaviour
         SetPage(transitionPage, page == Page.Transition);
         SetPage(gameOverPage, page == Page.GameOver);
     }
-
 
     void SetPage(GameObject go, bool active)
     {
@@ -96,22 +151,88 @@ public class UIManager : MonoBehaviour
 
         player1Text.text = "Player 1: " + p1Total.ToString("F1") + " s";
         player2Text.text = "Player 2: " + p2Total.ToString("F1") + " s";
+
+        // Audio manager should react
+        AudioManager.Instance.PlayGameOverBgMusic();
+
         PageTransection(Page.GameOver);
     }
 
     // Main Menu button on the pause page and Play Again button on the game over page.
-    // Reloading the scene resets everything; Start() then opens the menu page.
+    // Reload the UI scene alone so both UI and gameplay state are reset.
     public void OpenMenu()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene(MenuScenePath, LoadSceneMode.Single);
     }
 
     // Play button on the menu page
     public void StartGame()
     {
+        Debug.Log("Here");
+        if (startingGame) return;
+        startingGame = true;
+        StartCoroutine(StartGameRoutine());
+    }
+
+    IEnumerator StartGameRoutine()
+    {
+        Scene gameScene = SceneManager.GetSceneByPath(GameScenePath);
+        if (!gameScene.isLoaded)
+        {
+            // These must be disabled BEFORE the other scene's OnEnable callbacks.
+            // Disabling them after loading is too late for duplicate-light errors.
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                if (root.name == "Main Camera" || root.name == "Global Light 2D" || root.name == "EventSystem")
+                    root.SetActive(false);
+            }
+            yield return SceneManager.LoadSceneAsync(GameScenePath, LoadSceneMode.Additive);
+        }
+
+        ConfigureLoadedScenes();
+        // Let the newly loaded managers finish Start() before starting a round.
+        yield return null;
+
+        if (GameManager.Instance == null)
+        {
+            startingGame = false;
+            Debug.LogError("GameScene must contain an active GameManager.", this);
+            yield break;
+        }
+
+        Time.timeScale = 1f;
         PageTransection(Page.Game);
         GameManager.Instance.StartGamePlay();
+        startingGame = false;
+    }
+
+    void ConfigureLoadedScenes()
+    {
+        Scene menuScene = SceneManager.GetSceneByPath(MenuScenePath);
+        Scene gameScene = SceneManager.GetSceneByPath(GameScenePath);
+        if (!menuScene.isLoaded || !gameScene.isLoaded) return;
+
+        // MenuScene owns the UI/input; GameScene owns the world camera/light.
+        foreach (GameObject root in menuScene.GetRootGameObjects())
+        {
+            if (root.name == "Main Camera" || root.name == "Global Light 2D")
+                root.SetActive(false);
+        }
+
+        foreach (GameObject root in gameScene.GetRootGameObjects())
+        {
+            if (root.name == "EventSystem" || root.name == "GamePlayCanvas" || root.name == "EndGameCanvas")
+                root.SetActive(false);
+            else if (root.name == "Main Camera" || root.name == "Global Light 2D")
+                root.SetActive(true);
+        }
+
+        // Re-enable the menu input only after the gameplay copy is disabled.
+        foreach (GameObject root in menuScene.GetRootGameObjects())
+            if (root.name == "EventSystem") root.SetActive(true);
+
+        SceneManager.SetActiveScene(gameScene);
     }
 
     // Settings button on the menu page and on the pause page
@@ -168,7 +289,7 @@ public class UIManager : MonoBehaviour
         StartCoroutine(TransitionRoutine(toNight));
     }
 
-   IEnumerator TransitionRoutine(bool toNight)
+    IEnumerator TransitionRoutine(bool toNight)
     {
         PageTransection(Page.Transition);
         yield return null;
@@ -205,7 +326,7 @@ public class UIManager : MonoBehaviour
         // Lost hearts are faded, remaining hearts are normal
         for (int i = 0; i < hearts.Length; i++)
             if (hearts[i] != null)
-                hearts[i].color = i < health ? Color.white : Color.clear;   
+                hearts[i].color = i < health ? Color.white : Color.clear;
     }
 
     public void UpdateTimer(float seconds)
