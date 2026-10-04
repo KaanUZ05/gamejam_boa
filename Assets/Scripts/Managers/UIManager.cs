@@ -112,6 +112,10 @@ public class UIManager : MonoBehaviour
 
         player1Text.text = "Player 1: " + p1Total.ToString("F1") + " s";
         player2Text.text = "Player 2: " + p2Total.ToString("F1") + " s";
+
+        // Audio manager should react
+        AudioManager.Instance.PlayGameOverBgMusic();
+
         PageTransection(Page.GameOver);
     }
 
