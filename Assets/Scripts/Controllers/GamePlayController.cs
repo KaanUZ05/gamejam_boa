@@ -129,6 +129,7 @@ public class GamePlayController : MonoBehaviour
         PlayerController.PlayerWisardsClean += HandlePlayerWisardsClean;
         PlayerController.WildWisardSpelled += HandleWildWisardSpelled;
         PlayerController.PlayerDied += EndCurrentRound;
+        PlayerController.WildWisardConsumed += ReturnWisardToPool;
     }
 
     private void OnDisable()
@@ -144,6 +145,7 @@ public class GamePlayController : MonoBehaviour
         PlayerController.PlayerWisardsClean -= HandlePlayerWisardsClean;
         PlayerController.WildWisardSpelled -= HandleWildWisardSpelled;
         PlayerController.PlayerDied -= EndCurrentRound;
+        PlayerController.WildWisardConsumed -= ReturnWisardToPool;
     }
 
     private void Start()
@@ -318,6 +320,17 @@ public class GamePlayController : MonoBehaviour
         }
     }
 
+    public void RemoveObstacleFromBoard(Obstacle obstacle)
+    {
+        if (obstacle == null)
+        {
+            Debug.LogError("Cannot remove a null obstacle from board.");
+            return;
+        }
+
+        ReturnObstacleToPool(obstacle);
+    }
+
     public Wisard GetWisardPrefab()
     {
         if (WisardPool.Count > 0)
@@ -407,5 +420,10 @@ public class GamePlayController : MonoBehaviour
         }
 
         RoundFinished?.Invoke(currentSurvivalTime);
+    }
+
+    public IReadOnlyList<Obstacle> GetActivePlacedObstacles()
+    {
+        return activePlacedObstacles;
     }
 }

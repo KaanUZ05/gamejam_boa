@@ -7,15 +7,10 @@ public class PlacementGrid : MonoBehaviour
     [SerializeField] private int laneCount = 4;
     [SerializeField] private float cellSize = 1.5f;
     [SerializeField] private Transform topLane;
+
     public float CellSize => cellSize;
-    private bool[,] occupiedCells;
     public float GridStartX => gridStartX;
     public int ColumnCount => columnCount;
-
-    private void Awake()
-    {
-        occupiedCells = new bool[laneCount, columnCount];
-    }
 
     public int WorldXToColumn(float worldX)
     {
@@ -31,78 +26,6 @@ public class PlacementGrid : MonoBehaviour
     public bool IsValidColumn(int column)
     {
         return column >= 0 && column < columnCount;
-    }
-
-    public bool CanPlace(
-        int startLane,
-        int startColumn,
-        int widthInCells,
-        int heightInLanes)
-    {
-        // Does it exceed the grid limits?
-        if (startLane < 0 ||
-            startLane + heightInLanes > laneCount ||
-            startColumn < 0 ||
-            startColumn + widthInCells > columnCount)
-        {
-            return false;
-        }
-
-        // Is any block that it is trying to fill is full?
-        for (int lane = startLane;
-             lane < startLane + heightInLanes;
-             lane++)
-        {
-            for (int column = startColumn;
-                 column < startColumn + widthInCells;
-                 column++)
-            {
-                if (occupiedCells[lane, column])
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    public void OccupyCells(
-        int startLane,
-        int startColumn,
-        int widthInCells,
-        int heightInLanes)
-    {
-        for (int lane = startLane;
-             lane < startLane + heightInLanes;
-             lane++)
-        {
-            for (int column = startColumn;
-                 column < startColumn + widthInCells;
-                 column++)
-            {
-                occupiedCells[lane, column] = true;
-            }
-        }
-    }
-
-    public void FreeCells(
-        int startLane,
-        int startColumn,
-        int widthInCells,
-        int heightInLanes)
-    {
-        for (int lane = startLane;
-             lane < startLane + heightInLanes;
-             lane++)
-        {
-            for (int column = startColumn;
-                 column < startColumn + widthInCells;
-                 column++)
-            {
-                occupiedCells[lane, column] = false;
-            }
-        }
     }
 
     public int WorldXToStartColumn(float worldX, int widthInCells)
@@ -147,5 +70,29 @@ public class PlacementGrid : MonoBehaviour
             (heightInLanes * cellSize / 2f);
 
         return new Vector2(x, y);
+    }
+
+    public bool IsInsideGrid(
+        int startLane,
+        int startColumn,
+        int widthInCells,
+        int heightInLanes)
+    {
+        if (startLane < 0 || startColumn < 0)
+        {
+            return false;
+        }
+
+        if (startLane + heightInLanes > laneCount)
+        {
+            return false;
+        }
+
+        if (startColumn + widthInCells > columnCount)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
