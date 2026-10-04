@@ -4,6 +4,11 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] private GamePlayController gamePlayController;
 
+    [Header("Global Running Speed")]
+    [SerializeField] private float startSpeed = 3f;
+    [SerializeField] private float maxSpeed = 10f;
+    [SerializeField] private float timeToMaxSpeed = 120f;
+
     [SerializeField] private int roundNum;
     public static GameManager Instance;
 
