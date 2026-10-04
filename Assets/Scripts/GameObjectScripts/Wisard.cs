@@ -51,7 +51,6 @@ public class Wisard : MonoBehaviour
 
     private void HandleWisardHitBoundary(Wisard hitWisard)
     {
-        // Only react if THIS specific Wisard instance is the one that hit the border
         if (hitWisard != this) return;
 
         ResetWisard();
@@ -67,21 +66,31 @@ public class Wisard : MonoBehaviour
         }
     }
 
+    // Works if Obstacle or Wisard Collider has "Is Trigger" CHECKED
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        TryHandleObstacleHit(other.gameObject);
+    }
+
+    // Works if BOTH Obstacle and Wisard Colliders have "Is Trigger" UNCHECKED
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        Obstacle obstacle = collision.gameObject.GetComponent<Obstacle>();
+        TryHandleObstacleHit(collision.gameObject);
+    }
 
+    private void TryHandleObstacleHit(GameObject hitObject)
+    {
+        Obstacle obstacle = hitObject.GetComponentInParent<Obstacle>();
         if (obstacle == null)
         {
             return;
         }
 
-        PlayerController playerController =
-            GetComponentInParent<PlayerController>();
-
+        // Only controlled Wisards (children of PlayerController) take damage!
+        PlayerController playerController = GetComponentInParent<PlayerController>();
         if (playerController == null)
         {
-            Debug.LogError("PlayerController could not be found for Wisard.");
+            // This is a wild unspelled Wisard in MovingBoardContent, ignore damage
             return;
         }
 

@@ -14,36 +14,35 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float wisardLifeSpan = 30f;
     [SerializeField] private float laneMoveDuration = 0.2f;
 
-    [Header("Current State")]
-
-    [Header("Health Settings")]
+    [Header("Health Settings (Per Wisard)")]
     [SerializeField] private int maxHealth = 3;
     [SerializeField] private float invulnerabilityDuration = 2f;
 
-    [Header("Health State")]
-    [SerializeField] private int currentHealth;
-    private bool isInvulnerable = false;
-    private List<Wisard> wisardsList = new List<Wisard>();
-    private Wisard currentWisard;
+    [Header("Health & Current State")]
+    [SerializeField] private int currentHealth; // Displays the currently controlled Wisard's health in Inspector
+    [SerializeField] private List<Wisard> wisardsList = new List<Wisard>();
+    [SerializeField] private Wisard currentWisard;
     [SerializeField] private int rage;
 
     private bool isPlayerActive;
 
-    // Wild Wisards currently inside a Lane's SpellArea waiting to be spelled
-    private List<Wisard> spellableWisards = new List<Wisard>();
-    private Dictionary<Wisard, Lane> spellableWisardLanes = new Dictionary<Wisard, Lane>();
-
     // Tracks which lane index each controlled Wisard is sitting in
     private Dictionary<Wisard, int> wisardLaneIndex = new Dictionary<Wisard, int>();
+
+    // Tracks health and invulnerability per individual Wisard
+    private Dictionary<Wisard, int> wisardHealths = new Dictionary<Wisard, int>();
+    private HashSet<Wisard> invulnerableWisards = new HashSet<Wisard>();
+    private Dictionary<Wisard, Coroutine> invulnerabilityCoroutines = new Dictionary<Wisard, Coroutine>();
 
     // Active coroutines for movement and lifespan
     private Dictionary<Wisard, Coroutine> moveCoroutines = new Dictionary<Wisard, Coroutine>();
     private Dictionary<Wisard, Coroutine> lifeCoroutines = new Dictionary<Wisard, Coroutine>();
 
     // Events to return Wisards to GamePlayController's WisardPool
-    public static Action<Wisard> WisardExpired;                 // Single Wisard 30s timer ended
+    public static Action<Wisard> WisardExpired;                 // Single Wisard 30s timer ended or died
     public static Action<List<Wisard>> PlayerWisardsClean;      // Round ended: send all controlled Wisards to pool
     public static Action<Wisard> WildWisardSpelled;             // Tells GamePlayController this wild Wisard is now owned by Player
+    public static Action PlayerDied;                            // Informs GamePlayController when ALL controlled Wisards die
 
     private void Awake()
     {
@@ -62,18 +61,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnEnable()
-    {
-        Lane.WisardEnteredZone += HandleWisardEntered;
-        Lane.WisardExitedZone += HandleWisardExited;
-    }
-
-    private void OnDisable()
-    {
-        Lane.WisardEnteredZone -= HandleWisardEntered;
-        Lane.WisardExitedZone -= HandleWisardExited;
-    }
-
     private void Update()
     {
         if (!isPlayerActive || Keyboard.current == null) return;
@@ -83,7 +70,9 @@ public class PlayerController : MonoBehaviour
             ChangeCurrentWisard();
         }
 
-        if (Keyboard.current.shiftKey.wasPressedThisFrame)
+        if (Keyboard.current.shiftKey.wasPressedThisFrame ||
+            Keyboard.current.leftShiftKey.wasPressedThisFrame ||
+            Keyboard.current.rightShiftKey.wasPressedThisFrame)
         {
             SpellWisard();
         }
@@ -107,7 +96,6 @@ public class PlayerController : MonoBehaviour
     {
         ResetPlayerWisards();
         currentHealth = maxHealth;
-        isInvulnerable = false;
 
         if (initialWisard == null || lanes == null || lanes.Length == 0)
         {
@@ -117,17 +105,26 @@ public class PlayerController : MonoBehaviour
 
         isPlayerActive = true;
 
+        // Ensure quota is at least 2 so 1 initial + 1 spelled Wisard works even if Inspector had 1
+        if (maxWisardQuota < 2)
+        {
+            maxWisardQuota = 2;
+        }
+
         // Spawn the first Wisard into the MIDDLE lane's WisarPosition
         int middleLaneIdx = lanes.Length / 2;
         Lane middleLane = lanes[middleLaneIdx];
 
+        RestoreWisardVisualAndCollider(initialWisard);
         initialWisard.transform.SetParent(transform, true);
         initialWisard.transform.position = middleLane.WisarPosition.position;
         initialWisard.gameObject.SetActive(true);
 
         wisardsList.Add(initialWisard);
         wisardLaneIndex[initialWisard] = middleLaneIdx;
+        wisardHealths[initialWisard] = maxHealth;
         currentWisard = initialWisard;
+        SyncInspectorHealth();
 
         Coroutine lifeRoutine = StartCoroutine(WisardLifeSpanRoutine(initialWisard));
         lifeCoroutines[initialWisard] = lifeRoutine;
@@ -144,13 +141,19 @@ public class PlayerController : MonoBehaviour
         StopAllCoroutines();
         moveCoroutines.Clear();
         lifeCoroutines.Clear();
+        invulnerabilityCoroutines.Clear();
+        invulnerableWisards.Clear();
+        wisardHealths.Clear();
         wisardLaneIndex.Clear();
-        spellableWisards.Clear();
-        spellableWisardLanes.Clear();
         currentWisard = null;
 
         if (wisardsList.Count > 0)
         {
+            for (int i = 0; i < wisardsList.Count; i++)
+            {
+                RestoreWisardVisualAndCollider(wisardsList[i]);
+            }
+
             PlayerWisardsClean?.Invoke(new List<Wisard>(wisardsList));
             wisardsList.Clear();
         }
@@ -164,44 +167,32 @@ public class PlayerController : MonoBehaviour
     }
 
     // =========================================================================
-    // TRIGGER ZONE HANDLERS
-    // =========================================================================
-
-    private void HandleWisardEntered(Wisard wisard, Lane lane)
-    {
-        if (!isPlayerActive || wisard == null || wisardsList.Contains(wisard)) return;
-
-        if (!spellableWisards.Contains(wisard))
-        {
-            spellableWisards.Add(wisard);
-        }
-        spellableWisardLanes[wisard] = lane;
-    }
-
-    private void HandleWisardExited(Wisard wisard, Lane lane)
-    {
-        if (wisard == null) return;
-
-        spellableWisards.Remove(wisard);
-        spellableWisardLanes.Remove(wisard);
-    }
-
-    // =========================================================================
     // SPELLING & LIFESPAN
     // =========================================================================
 
     private void SpellWisard()
     {
-        if (wisardsList.Count >= maxWisardQuota || spellableWisards.Count == 0)
+        if (wisardsList.Count >= maxWisardQuota || lanes == null)
         {
             return;
         }
 
-        Wisard newWisard = spellableWisards[0];
-        Lane enteredLane = spellableWisardLanes[newWisard];
+        Wisard newWisard = null;
+        Lane enteredLane = null;
 
-        spellableWisards.RemoveAt(0);
-        spellableWisardLanes.Remove(newWisard);
+        // Directly check each Lane's SpellArea child collider for a wild Wisard
+        for (int i = 0; i < lanes.Length; i++)
+        {
+            if (lanes[i] == null) continue;
+
+            Wisard found = lanes[i].GetWisardInSpellArea(wisardsList);
+            if (found != null)
+            {
+                newWisard = found;
+                enteredLane = lanes[i];
+                break;
+            }
+        }
 
         if (newWisard == null || enteredLane == null) return;
 
@@ -209,8 +200,10 @@ public class PlayerController : MonoBehaviour
         WildWisardSpelled?.Invoke(newWisard);
 
         // Reparent from MovingBoardContent to PlayerController so it stops scrolling left
+        RestoreWisardVisualAndCollider(newWisard);
         newWisard.transform.SetParent(transform, true);
         wisardsList.Add(newWisard);
+        wisardHealths[newWisard] = maxHealth;
 
         int targetLaneIdx = enteredLane.laneIndex;
 
@@ -234,12 +227,21 @@ public class PlayerController : MonoBehaviour
         if (currentWisard == null)
         {
             currentWisard = newWisard;
+            SyncInspectorHealth();
         }
 
         StartLaneMove(newWisard, targetLaneIdx);
 
         Coroutine lifeRoutine = StartCoroutine(WisardLifeSpanRoutine(newWisard));
         lifeCoroutines[newWisard] = lifeRoutine;
+
+        // Make the newly collected Wisard transparent and invulnerable for 2 seconds
+        if (invulnerabilityCoroutines.ContainsKey(newWisard) && invulnerabilityCoroutines[newWisard] != null)
+        {
+            StopCoroutine(invulnerabilityCoroutines[newWisard]);
+        }
+        Coroutine invulnRoutine = StartCoroutine(InvulnerabilityRoutine(newWisard));
+        invulnerabilityCoroutines[newWisard] = invulnRoutine;
     }
 
     private IEnumerator WisardLifeSpanRoutine(Wisard wisard)
@@ -248,13 +250,14 @@ public class PlayerController : MonoBehaviour
 
         while (timer > 0f)
         {
-            // Only count down when we have 2 wisards!
-            if (wisardsList.Count > 1)
+            // Only count down when we have 2 wisards AND this is the Wisard we do NOT control!
+            if (wisardsList.Count > 1 && wisard != currentWisard)
             {
                 timer -= Time.deltaTime;
             }
-            else
+            else if (wisardsList.Count <= 1)
             {
+                // Reset timer back to full when down to 1 Wisard
                 timer = wisardLifeSpan;
             }
 
@@ -266,16 +269,33 @@ public class PlayerController : MonoBehaviour
 
     private void RemoveExpiredWisard(Wisard expiredWisard)
     {
+        if (expiredWisard == null) return;
+
         if (moveCoroutines.ContainsKey(expiredWisard) && moveCoroutines[expiredWisard] != null)
         {
             StopCoroutine(moveCoroutines[expiredWisard]);
         }
 
+        if (lifeCoroutines.ContainsKey(expiredWisard) && lifeCoroutines[expiredWisard] != null)
+        {
+            StopCoroutine(lifeCoroutines[expiredWisard]);
+        }
+
+        if (invulnerabilityCoroutines.ContainsKey(expiredWisard) && invulnerabilityCoroutines[expiredWisard] != null)
+        {
+            StopCoroutine(invulnerabilityCoroutines[expiredWisard]);
+        }
+
         moveCoroutines.Remove(expiredWisard);
         lifeCoroutines.Remove(expiredWisard);
+        invulnerabilityCoroutines.Remove(expiredWisard);
+        invulnerableWisards.Remove(expiredWisard);
+        wisardHealths.Remove(expiredWisard);
         wisardLaneIndex.Remove(expiredWisard);
         wisardsList.Remove(expiredWisard);
 
+        // If the Wisard that died/expired was the one we were controlling,
+        // automatically switch control to the remaining Wisard!
         if (currentWisard == expiredWisard)
         {
             if (wisardsList.Count > 0)
@@ -288,6 +308,8 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        SyncInspectorHealth();
+        RestoreWisardVisualAndCollider(expiredWisard);
         WisardExpired?.Invoke(expiredWisard);
     }
 
@@ -302,6 +324,7 @@ public class PlayerController : MonoBehaviour
         int index = wisardsList.IndexOf(currentWisard);
         int nextIndex = (index + 1) % wisardsList.Count;
         currentWisard = wisardsList[nextIndex];
+        SyncInspectorHealth();
     }
 
     private void MoveCurrentWisard(int direction)
@@ -374,14 +397,23 @@ public class PlayerController : MonoBehaviour
         moveCoroutines.Remove(wisard);
     }
 
+    // =========================================================================
+    // HEALTH, INVULNERABILITY & DEATH MECHANICS (Per Individual Wisard)
+    // =========================================================================
+
     public void TakeDamage(int amount, Wisard damagedWisard)
     {
-        if (!isPlayerActive)
+        if (!isPlayerActive || damagedWisard == null)
         {
             return;
         }
 
-        if (isInvulnerable)
+        if (!wisardsList.Contains(damagedWisard))
+        {
+            return;
+        }
+
+        if (invulnerableWisards.Contains(damagedWisard))
         {
             return;
         }
@@ -392,32 +424,61 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        currentHealth -= amount;
-
-        Debug.Log("Player took " + amount + " damage. Current health: " + currentHealth);
-
-        if (currentHealth <= 0)
+        if (!wisardHealths.ContainsKey(damagedWisard))
         {
-            currentHealth = 0;
-            HandlePlayerDeath();
+            wisardHealths[damagedWisard] = maxHealth;
+        }
+
+        wisardHealths[damagedWisard] -= amount;
+        rage += amount;
+
+        int remainingWisardHealth = wisardHealths[damagedWisard];
+        SyncInspectorHealth();
+
+        Debug.Log(damagedWisard.name + " took " + amount + " damage. Remaining health: " + remainingWisardHealth);
+
+        if (remainingWisardHealth <= 0)
+        {
+            HandleWisardDeath(damagedWisard);
             return;
         }
 
-        StartCoroutine(
-            InvulnerabilityRoutine(damagedWisard)
-        );
+        if (invulnerabilityCoroutines.ContainsKey(damagedWisard) && invulnerabilityCoroutines[damagedWisard] != null)
+        {
+            StopCoroutine(invulnerabilityCoroutines[damagedWisard]);
+        }
+        Coroutine invulnRoutine = StartCoroutine(InvulnerabilityRoutine(damagedWisard));
+        invulnerabilityCoroutines[damagedWisard] = invulnRoutine;
+    }
+
+    private void HandleWisardDeath(Wisard deadWisard)
+    {
+        Debug.Log(deadWisard.name + " died and returned to the pool!");
+
+        // Removes deadWisard from wisardsList, switches currentWisard to the survivor if needed,
+        // and invokes WisardExpired so GamePlayController returns it to the pool!
+        RemoveExpiredWisard(deadWisard);
+
+        // Only freeze controls and trigger PlayerDied if NO Wisards remain on the board!
+        if (wisardsList.Count == 0)
+        {
+            HandlePlayerDeath();
+        }
+        else
+        {
+            Debug.Log("Continuing with remaining Wisard: " + currentWisard.name);
+        }
     }
 
     private IEnumerator InvulnerabilityRoutine(Wisard damagedWisard)
     {
-        isInvulnerable = true;
-
         if (damagedWisard == null)
         {
             Debug.LogError("Damaged Wisard is null.");
-            isInvulnerable = false;
             yield break;
         }
+
+        invulnerableWisards.Add(damagedWisard);
 
         SpriteRenderer renderer = damagedWisard.spriteRenderer;
         Collider2D wisardCollider = damagedWisard.wisardCollider;
@@ -458,13 +519,44 @@ public class PlayerController : MonoBehaviour
             wisardCollider.enabled = true;
         }
 
-        isInvulnerable = false;
+        invulnerableWisards.Remove(damagedWisard);
+        invulnerabilityCoroutines.Remove(damagedWisard);
+    }
+
+    private void RestoreWisardVisualAndCollider(Wisard wisard)
+    {
+        if (wisard == null) return;
+
+        if (wisard.spriteRenderer != null)
+        {
+            Color color = wisard.spriteRenderer.color;
+            color.a = 1f;
+            wisard.spriteRenderer.color = color;
+        }
+
+        if (wisard.wisardCollider != null)
+        {
+            wisard.wisardCollider.enabled = true;
+        }
+    }
+
+    private void SyncInspectorHealth()
+    {
+        if (currentWisard != null && wisardHealths.TryGetValue(currentWisard, out int hp))
+        {
+            currentHealth = hp;
+        }
+        else
+        {
+            currentHealth = 0;
+        }
     }
 
     private void HandlePlayerDeath()
     {
-        Debug.Log("Player died.");
+        Debug.Log("All Wisards died! Round Over.");
 
         isPlayerActive = false;
+        PlayerDied?.Invoke();
     }
 }

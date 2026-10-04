@@ -128,6 +128,7 @@ public class GamePlayController : MonoBehaviour
         PlayerController.WisardExpired += ReturnWisardToPool;
         PlayerController.PlayerWisardsClean += HandlePlayerWisardsClean;
         PlayerController.WildWisardSpelled += HandleWildWisardSpelled;
+        PlayerController.PlayerDied += EndCurrentRound;
     }
 
     private void OnDisable()
@@ -142,6 +143,7 @@ public class GamePlayController : MonoBehaviour
         PlayerController.WisardExpired -= ReturnWisardToPool;
         PlayerController.PlayerWisardsClean -= HandlePlayerWisardsClean;
         PlayerController.WildWisardSpelled -= HandleWildWisardSpelled;
+        PlayerController.PlayerDied -= EndCurrentRound;
     }
 
     private void Start()
@@ -302,6 +304,7 @@ public class GamePlayController : MonoBehaviour
         if (obs == null) return;
 
         activePlacedObstacles.Remove(obs);
+        obs.ResetObstacleState();
         obs.gameObject.SetActive(false);
         obs.transform.SetParent(ObstaclePoolContent, true);
 
@@ -334,6 +337,7 @@ public class GamePlayController : MonoBehaviour
         if (wisard == null) return;
 
         activeWildWisards.Remove(wisard);
+        wisard.ResetWisard();
         wisard.gameObject.SetActive(false);
         wisard.transform.SetParent(WisardPoolContent, true);
 
@@ -395,6 +399,12 @@ public class GamePlayController : MonoBehaviour
 
         // 3. Stop conveyor belt and return belt obstacles to pool
         conveyorBeltController.InactivateBelt();
+
+        // 4. Notify GameManager with the final survival time
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.HandleRoundFinished(currentSurvivalTime);
+        }
 
         RoundFinished?.Invoke(currentSurvivalTime);
     }
