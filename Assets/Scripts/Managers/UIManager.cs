@@ -79,6 +79,11 @@ public class UIManager : MonoBehaviour
         if (go != null) go.SetActive(active);
     }
 
+    void SetPage(GameObject go, bool active)
+    {
+        if (go != null) go.SetActive(active);
+    }
+
     // Shows the total score (sum of survival times of all rounds) of both players
     public void ShowGameOver()
     {

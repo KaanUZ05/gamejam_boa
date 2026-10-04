@@ -12,5 +12,7 @@ public class ObstacleData : ScriptableObject
     public Sprite obstacleSprite; // during drag
 
     public int obstacleLevel; // in case of improvement mechanism
+
+    public int damageAmount = 1;
     //public int damageAmount; // maybe in the future
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Lane : MonoBehaviour
@@ -6,14 +7,11 @@ public class Lane : MonoBehaviour
     public int laneIndex;
 
     [Header("Lane Positions")]
-    public Transform WisarPosition;     // Where controlled/spelled Wisards stand (middle lane on round start)
-    public Transform WisardSpawnPoint;  // Where wild Wisards spawn randomly during the round
+    public Transform WisarPosition;     // Where controlled/spelled Wisards stand
+    public Transform WisardSpawnPoint;  // Where wild Wisards spawn randomly
 
-    [SerializeField] private Collider2D SpellArea;
-
-    // Informs PlayerController when a wild Wisard enters/exits the SpellArea
-    public static Action<Wisard, Lane> WisardEnteredZone;
-    public static Action<Wisard, Lane> WisardExitedZone;
+    [Header("Spell Zone Sub-Object Collider")]
+    [SerializeField] private Collider2D SpellArea; // Drag your spellZone child Collider2D here!
 
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Transform visualTransform;
@@ -42,6 +40,11 @@ public class Lane : MonoBehaviour
             return;
         }
 
+        if (SpellArea == null)
+        {
+            Debug.LogError("SpellArea (spellZone) Collider2D is not assigned on: " + name);
+        }
+
         spriteRenderer.sprite = laneSprite;
 
         Vector2 spriteSize = laneSprite.bounds.size;
@@ -53,19 +56,25 @@ public class Lane : MonoBehaviour
         );
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    public Wisard GetWisardInSpellArea(List<Wisard> alreadyOwnedWisards)
     {
-        if (other.TryGetComponent(out Wisard wisard))
-        {
-            WisardEnteredZone?.Invoke(wisard, this);
-        }
-    }
+        if (SpellArea == null) return null;
 
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.TryGetComponent(out Wisard wisard))
+        // Force Unity 2D to sync collider positions with MovingBoardContent.position!
+        Physics2D.SyncTransforms();
+
+        Bounds bounds = SpellArea.bounds;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(bounds.center, bounds.size, 0f);
+
+        for (int i = 0; i < hits.Length; i++)
         {
-            WisardExitedZone?.Invoke(wisard, this);
+            Wisard wisard = hits[i].GetComponentInParent<Wisard>();
+            if (wisard != null && !alreadyOwnedWisards.Contains(wisard))
+            {
+                return wisard;
+            }
         }
+
+        return null;
     }
 }

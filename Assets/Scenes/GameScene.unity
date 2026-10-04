@@ -298,10 +298,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73e3306f314bfe24283bb49a67a5716f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GamePlayController
+  MovingBoardContent: {fileID: 0}
   ObstacklePrefab: {fileID: 1326047639595442256, guid: 940bae1bb275d5a498a9ec2ab3ae1360, type: 3}
   ObstaclePoolContent: {fileID: 1293280046}
   initialObstaclePoolCount: 15
-  WisardPrefab: {fileID: 2961584224593006321, guid: 1a735bb360521444a8a41855693eaa5b, type: 3}
+  WisardPrefab: {fileID: 588611605426569686, guid: 1a735bb360521444a8a41855693eaa5b, type: 3}
   WisardPoolContent: {fileID: 1694511542}
   initialWisardPoolCount: 15
   wildWisardSpawnInterval: 8
@@ -1208,6 +1209,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   gamePlayController: {fileID: 256329768}
+  startSpeed: 3
+  maxSpeed: 10
+  timeToMaxSpeed: 120
   roundNum: 0
 --- !u!4 &1019426362
 Transform:
@@ -1703,6 +1707,9 @@ MonoBehaviour:
   maxWisardQuota: 2
   wisardLifeSpan: 30
   laneMoveDuration: 0.2
+  maxHealth: 3
+  invulnerabilityDuration: 2
+  currentHealth: 0
   rage: 0
 --- !u!4 &1603098880
 Transform:
@@ -1724,6 +1731,125 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2546653004087374834, guid: 940bae1bb275d5a498a9ec2ab3ae1360, type: 3}
   m_PrefabInstance: {fileID: 281638958}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1684664558
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1684664561}
+  - component: {fileID: 1684664560}
+  - component: {fileID: 1684664563}
+  - component: {fileID: 1684664562}
+  m_Layer: 0
+  m_Name: Border
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1684664560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1684664558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d45d5c955ee5ba749ab0d5bff2135c44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Border
+--- !u!4 &1684664561
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1684664558}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.49, y: -1.6, z: 0}
+  m_LocalScale: {x: 1, y: 6.84, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!50 &1684664562
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1684664558}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 0
+  m_CollisionDetection: 0
+  m_Constraints: 7
+--- !u!61 &1684664563
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1684664558}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!1 &1694511541
 GameObject:
   m_ObjectHideFlags: 0
@@ -2108,3 +2234,4 @@ SceneRoots:
   - {fileID: 1603098880}
   - {fileID: 283854340}
   - {fileID: 437400802}
+  - {fileID: 1684664561}
