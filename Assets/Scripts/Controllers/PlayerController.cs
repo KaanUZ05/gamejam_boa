@@ -459,6 +459,8 @@ public class PlayerController : MonoBehaviour
         }
 
         wisardHealths[damagedWisard] -= amount;
+        UIManager.Instance.UpdateHealth(wisardHealths[damagedWisard]);
+        rage += amount;
 
         int remainingWisardHealth = wisardHealths[damagedWisard];
         SyncInspectorHealth();

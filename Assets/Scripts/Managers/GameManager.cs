@@ -34,8 +34,6 @@ public class GameManager : MonoBehaviour
 
         gamePlayController.RoundFinished += HandleRoundFinished;
 
-        // TODO: DELETE THIS
-        StartGamePlay();
     }
 
     private void OnDestroy()
@@ -79,10 +77,11 @@ public class GameManager : MonoBehaviour
         {
             DataManager.Instance.IncreasePlayer2Score(time);
         }
-
+        if (roundNum == 1)
+            UIManager.Instance.PlayRoundTransition(true);   
+        else
+            UIManager.Instance.ShowGameOver();              
         roundNum++;
-
-        // TODO: Call the UI
     }
 
     /// <summary>
@@ -97,4 +96,13 @@ public class GameManager : MonoBehaviour
         }
         gamePlayController.StartRound(roundNum);
     }
+
+        /// <summary>
+    /// Starts the next round after the transition page.
+    /// </summary>
+    public void StartNextRound()
+    {
+        gamePlayController.StartRound(roundNum);
+    }
+
 }

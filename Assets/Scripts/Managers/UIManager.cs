@@ -4,6 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 
 public enum Page { Game, Transition, GameOver, Menu, Settings, Pause }
 
@@ -23,6 +25,7 @@ public class UIManager : MonoBehaviour
     public TMP_Text timerText;           // TimeTxt
     public TMP_Text scoreText;           // ScoreTxt
     public Image[] rageFires;            // Fire images (3)
+    public Image[] hearts;               // Heart images (3)
 
     // Settings
     public Slider volumeSlider;          // Volume slider on the settings page
@@ -31,6 +34,7 @@ public class UIManager : MonoBehaviour
     public TMP_Text winnerText;         // WinnerTxt
     public TMP_Text player1Text;         // Player1
     public TMP_Text player2Text;         // Player2
+    public PlayerData playerData;        // same PlayerData asset as DataManager (total scores)
 
     // Day-night transition
     public SpriteRenderer backgroundImage;   // Background (scene object)
@@ -44,6 +48,7 @@ public class UIManager : MonoBehaviour
 
     Page currentPage;
     Page pageBeforeSettings;
+    bool continuePressed;
 
     void Awake()
     {
@@ -56,6 +61,7 @@ public class UIManager : MonoBehaviour
         PageTransection(Page.Menu);
         if (volumeSlider != null) volumeSlider.value = AudioListener.volume;   // keeps the slider in sync after a scene reload
         UpdateRage(0);
+        UpdateHealth(3);
         UpdateTimer(0f);
         UpdateScore(0);
     }
@@ -72,16 +78,24 @@ public class UIManager : MonoBehaviour
         SetPage(gameOverPage, page == Page.GameOver);
     }
 
+
     void SetPage(GameObject go, bool active)
     {
         if (go != null) go.SetActive(active);
     }
 
-    public void ShowGameOver(string winnerName, float p1Time, float p2Time)
+    // Shows the total score (sum of survival times of all rounds) of both players
+    public void ShowGameOver()
     {
-        winnerText.text = winnerName + " Wins!";
-        player1Text.text = "Player 1: " + p1Time.ToString("F1") + " s";
-        player2Text.text = "Player 2: " + p2Time.ToString("F1") + " s";
+        float p1Total = playerData.Player1Score;
+        float p2Total = playerData.Player2Score;
+
+        if (p1Total > p2Total) winnerText.text = "Player 1 Wins!";
+        else if (p2Total > p1Total) winnerText.text = "Player 2 Wins!";
+        else winnerText.text = "Draw!";
+
+        player1Text.text = "Player 1: " + p1Total.ToString("F1") + " s";
+        player2Text.text = "Player 2: " + p2Total.ToString("F1") + " s";
         PageTransection(Page.GameOver);
     }
 
@@ -97,7 +111,7 @@ public class UIManager : MonoBehaviour
     public void StartGame()
     {
         PageTransection(Page.Game);
-        OnRoundStartPressed?.Invoke();
+        GameManager.Instance.StartGamePlay();
     }
 
     // Settings button on the menu page and on the pause page
@@ -143,12 +157,18 @@ public class UIManager : MonoBehaviour
 #endif
     }
 
+    // Continue button on the transition page: starts the next round
+    public void ContinueRound()
+    {
+        continuePressed = true;
+    }
+
     public void PlayRoundTransition(bool toNight)
     {
         StartCoroutine(TransitionRoutine(toNight));
     }
 
-    IEnumerator TransitionRoutine(bool toNight)
+   IEnumerator TransitionRoutine(bool toNight)
     {
         PageTransection(Page.Transition);
         yield return null;
@@ -164,12 +184,13 @@ public class UIManager : MonoBehaviour
         // Rest of the animation
         yield return new WaitForSecondsRealtime(Mathf.Max(0f, transitionDuration - backgroundSwapTime));
 
-        // Wait for Space
-        while (!Input.GetKeyDown(KeyCode.Space))
+        // Wait for Space or the continue button (presses during the animation are ignored)
+        continuePressed = false;
+        while (!continuePressed && !(Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame))
             yield return null;
 
         PageTransection(Page.Game);
-        OnRoundStartPressed?.Invoke();
+        GameManager.Instance.StartNextRound();
     }
 
     public void UpdateRage(int rage)
@@ -177,6 +198,14 @@ public class UIManager : MonoBehaviour
         // Collected fires are white (normal sprite colors), the others are transparent
         for (int i = 0; i < rageFires.Length; i++)
             rageFires[i].color = i < rage ? Color.white : Color.clear;
+    }
+
+    public void UpdateHealth(int health)
+    {
+        // Lost hearts are faded, remaining hearts are normal
+        for (int i = 0; i < hearts.Length; i++)
+            if (hearts[i] != null)
+                hearts[i].color = i < health ? Color.white : Color.clear;   
     }
 
     public void UpdateTimer(float seconds)

@@ -166,6 +166,7 @@ public class GamePlayController : MonoBehaviour
         if (!isRoundActive) return;
 
         currentSurvivalTime += Time.deltaTime;
+        UIManager.Instance.UpdateTimer(currentSurvivalTime);
         conveyorBeltController.UpdateDifficulty(NormalizedDifficultyProgress);
 
         // Move all placed obstacles and wild Wisards toward the left
@@ -372,6 +373,8 @@ public class GamePlayController : MonoBehaviour
     {
         currentRound = roundNumber;
         currentSurvivalTime = 0f;
+        UIManager.Instance.UpdateHealth(3);
+        UIManager.Instance.UpdateRage(0);
         isRoundActive = true;
 
         if (MovingBoardContent != null)
@@ -412,12 +415,6 @@ public class GamePlayController : MonoBehaviour
 
         // 3. Stop conveyor belt and return belt obstacles to pool
         conveyorBeltController.InactivateBelt();
-
-        // 4. Notify GameManager with the final survival time
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.HandleRoundFinished(currentSurvivalTime);
-        }
 
         RoundFinished?.Invoke(currentSurvivalTime);
     }
