@@ -231,6 +231,9 @@ public class PlayerController : MonoBehaviour
         // Yer varsa normal şekilde Wisard'ı bağla.
         WildWisardSpelled?.Invoke(newWisard);
 
+        // show the pop up
+        UIManager.Instance.PlayPopup();
+
         // Reparent from MovingBoardContent to PlayerController so it stops scrolling left
         RestoreWisardVisualAndCollider(newWisard);
         newWisard.transform.SetParent(transform, true);

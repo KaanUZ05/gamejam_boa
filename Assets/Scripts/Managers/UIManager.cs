@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.Video; // Added for VideoPlayer
 using Unity.VisualScripting;
 
 public enum Page { Game, Transition, GameOver, Menu, Settings, Pause }
@@ -31,11 +32,16 @@ public class UIManager : MonoBehaviour
     public Image[] rageFires;            // Fire images (3)
     public Image[] hearts;               // Heart images (3)
 
+    // Popup Alert (Twitch-style video overlay)
+    [Header("Popup Alert")]
+    public GameObject popupObject;       // RawImage GameObject inside GamePlayCanvas
+    public VideoPlayer popupVideoPlayer; // VideoPlayer component
+
     // Settings
     public Slider volumeSlider;          // Volume slider on the settings page
 
     // Game over
-    public TMP_Text winnerText;         // WinnerTxt
+    public TMP_Text winnerText;          // WinnerTxt
     public TMP_Text player1Text;         // Player1
     public TMP_Text player2Text;         // Player2
     public PlayerData playerData;        // same PlayerData asset as DataManager (total scores)
@@ -67,6 +73,9 @@ public class UIManager : MonoBehaviour
 
     void OnDestroy()
     {
+        if (popupVideoPlayer != null)
+            popupVideoPlayer.loopPointReached -= OnPopupVideoFinished;
+
         if (Instance == this) Instance = null;
     }
 
@@ -80,6 +89,37 @@ public class UIManager : MonoBehaviour
         UpdateHealth(3);
         UpdateTimer(0f);
         UpdateScore(0);
+
+        // Initialize Popup Alert
+        if (popupObject != null)
+            popupObject.SetActive(false);
+
+        if (popupVideoPlayer != null)
+            popupVideoPlayer.loopPointReached += OnPopupVideoFinished;
+    }
+
+    // Call this from anywhere via: UIManager.Instance.PlayPopup();
+    // Or pass a specific clip: UIManager.Instance.PlayPopup(customClip);
+    public void PlayPopup(VideoClip customClip = null)
+    {
+        if (popupObject == null || popupVideoPlayer == null) return;
+
+        if (customClip != null)
+            popupVideoPlayer.clip = customClip;
+
+        // Clear the previous frame from the RenderTexture so it doesn't flash old frames
+        if (popupVideoPlayer.targetTexture != null)
+            popupVideoPlayer.targetTexture.Release();
+
+        popupObject.SetActive(true);
+        popupVideoPlayer.Stop();
+        popupVideoPlayer.Play();
+    }
+
+    private void OnPopupVideoFinished(VideoPlayer vp)
+    {
+        if (popupObject != null)
+            popupObject.SetActive(false);
     }
 
     public void PageTransection(Page page)
@@ -93,7 +133,6 @@ public class UIManager : MonoBehaviour
         SetPage(transitionPage, page == Page.Transition);
         SetPage(gameOverPage, page == Page.GameOver);
     }
-
 
     void SetPage(GameObject go, bool active)
     {
@@ -250,7 +289,7 @@ public class UIManager : MonoBehaviour
         StartCoroutine(TransitionRoutine(toNight));
     }
 
-   IEnumerator TransitionRoutine(bool toNight)
+    IEnumerator TransitionRoutine(bool toNight)
     {
         PageTransection(Page.Transition);
         yield return null;
@@ -287,7 +326,7 @@ public class UIManager : MonoBehaviour
         // Lost hearts are faded, remaining hearts are normal
         for (int i = 0; i < hearts.Length; i++)
             if (hearts[i] != null)
-                hearts[i].color = i < health ? Color.white : Color.clear;   
+                hearts[i].color = i < health ? Color.white : Color.clear;
     }
 
     public void UpdateTimer(float seconds)
