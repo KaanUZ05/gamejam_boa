@@ -102,6 +102,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGamePlay()
     {
+        AudioManager.Instance.PlayGameBgMusic();
         roundNum = 1;
         if (DataManager.Instance != null)
         {
