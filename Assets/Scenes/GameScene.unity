@@ -1704,13 +1704,17 @@ MonoBehaviour:
   - {fileID: 1874065931}
   - {fileID: 1325327863}
   - {fileID: 851308483}
+  gamePlayController: {fileID: 256329768}
   maxWisardQuota: 2
   wisardLifeSpan: 30
   laneMoveDuration: 0.2
   maxHealth: 3
   invulnerabilityDuration: 2
   currentHealth: 0
+  wisardsList: []
+  currentWisard: {fileID: 0}
   rage: 0
+  maxRage: 3
 --- !u!4 &1603098880
 Transform:
   m_ObjectHideFlags: 0

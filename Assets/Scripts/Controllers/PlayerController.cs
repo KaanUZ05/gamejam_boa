@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Lanes")]
     [SerializeField] private Lane[] lanes;
+    [SerializeField] private GamePlayController gamePlayController;
 
     [Header("Wisard Settings")]
     [SerializeField] private int maxWisardQuota = 2;
@@ -23,6 +24,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private List<Wisard> wisardsList = new List<Wisard>();
     [SerializeField] private Wisard currentWisard;
     [SerializeField] private int rage;
+    [SerializeField] private int maxRage = 3;
+    public int Rage => rage;
 
     private bool isPlayerActive;
 
@@ -42,6 +45,7 @@ public class PlayerController : MonoBehaviour
     public static Action<Wisard> WisardExpired;                 // Single Wisard 30s timer ended or died
     public static Action<List<Wisard>> PlayerWisardsClean;      // Round ended: send all controlled Wisards to pool
     public static Action<Wisard> WildWisardSpelled;             // Tells GamePlayController this wild Wisard is now owned by Player
+    public static Action<Wisard> WildWisardConsumed;
     public static Action PlayerDied;                            // Informs GamePlayController when ALL controlled Wisards die
 
     private void Awake()
@@ -77,14 +81,24 @@ public class PlayerController : MonoBehaviour
             SpellWisard();
         }
 
-        if (Keyboard.current.upArrowKey.wasPressedThisFrame)
+        if (Keyboard.current.wKey.wasPressedThisFrame)
         {
             MoveCurrentWisard(-1); // Move 1 lane up (towards index 0)
         }
 
-        if (Keyboard.current.downArrowKey.wasPressedThisFrame)
+        if (Keyboard.current.sKey.wasPressedThisFrame)
         {
             MoveCurrentWisard(1); // Move 1 lane down (towards lanes.Length - 1)
+        }
+
+        if (Keyboard.current.qKey.wasPressedThisFrame)
+        {
+            UseFireballSkill();
+        }
+
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            UseLaneClearSkill();
         }
     }
 
@@ -96,6 +110,7 @@ public class PlayerController : MonoBehaviour
     {
         ResetPlayerWisards();
         currentHealth = maxHealth;
+        rage = 0;
 
         if (initialWisard == null || lanes == null || lanes.Length == 0)
         {
@@ -172,7 +187,7 @@ public class PlayerController : MonoBehaviour
 
     private void SpellWisard()
     {
-        if (wisardsList.Count >= maxWisardQuota || lanes == null)
+        if (lanes == null)
         {
             return;
         }
@@ -194,9 +209,23 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (newWisard == null || enteredLane == null) return;
+        if (newWisard == null || enteredLane == null)
+        {
+            return;
+        }
 
-        // Inform GamePlayController that this wild Wisard is now controlled by PlayerController
+        // Orb her durumda rage verir.
+        GainRage(1);
+
+        // Zaten maksimum Wisard sayısındaysak:
+        // rage'i al ama üçüncü Wisard'ı bağlama.
+        if (wisardsList.Count >= maxWisardQuota)
+        {
+            WildWisardConsumed?.Invoke(newWisard);
+            return;
+        }
+
+        // Yer varsa normal şekilde Wisard'ı bağla.
         WildWisardSpelled?.Invoke(newWisard);
 
         // Reparent from MovingBoardContent to PlayerController so it stops scrolling left
@@ -430,7 +459,6 @@ public class PlayerController : MonoBehaviour
         }
 
         wisardHealths[damagedWisard] -= amount;
-        rage += amount;
 
         int remainingWisardHealth = wisardHealths[damagedWisard];
         SyncInspectorHealth();
@@ -558,5 +586,184 @@ public class PlayerController : MonoBehaviour
 
         isPlayerActive = false;
         PlayerDied?.Invoke();
+    }
+
+    // =========================================================================
+    // RAGE AND FIREBALL
+    // =========================================================================
+
+    private void GainRage(int amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        rage = Mathf.Clamp(rage + amount, 0, maxRage);
+
+        Debug.Log("Player rage: " + rage);
+    }
+
+    private Obstacle FindClosestObstacleAhead()
+    {
+        if (currentWisard == null)
+        {
+            Debug.LogError("Cannot find obstacle: current Wisard is null.");
+            return null;
+        }
+
+        if (!wisardLaneIndex.TryGetValue(currentWisard, out int currentLaneIndex))
+        {
+            Debug.LogError("Current Wisard does not have a lane index.");
+            return null;
+        }
+
+        IReadOnlyList<Obstacle> obstacles =
+            gamePlayController.GetActivePlacedObstacles();
+
+        Obstacle closestObstacle = null;
+        float closestDistance = float.MaxValue;
+
+        for (int i = 0; i < obstacles.Count; i++)
+        {
+            Obstacle obstacle = obstacles[i];
+
+            if (obstacle == null || !obstacle.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            // Sadece Wisard'ın önündeki obstacle'lar.
+            if (obstacle.transform.position.x <= currentWisard.transform.position.x)
+            {
+                continue;
+            }
+
+            int obstacleStartLane = obstacle.PlacedStartLane;
+            int obstacleEndLane =
+                obstacleStartLane + obstacle.HeightInLanes - 1;
+
+            // Obstacle mevcut Wisard'ın lane'ine değmiyorsa geç.
+            if (currentLaneIndex < obstacleStartLane ||
+                currentLaneIndex > obstacleEndLane)
+            {
+                continue;
+            }
+
+            float distance =
+                obstacle.transform.position.x -
+                currentWisard.transform.position.x;
+
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestObstacle = obstacle;
+            }
+        }
+
+        return closestObstacle;
+    }
+
+    private void UseFireballSkill()
+    {
+        if (!isPlayerActive)
+        {
+            return;
+        }
+
+        if (currentWisard == null)
+        {
+            return;
+        }
+
+        if (rage < 1)
+        {
+            Debug.Log("Not enough rage for fireball.");
+            return;
+        }
+
+        rage -= 1;
+
+        Obstacle target = FindClosestObstacleAhead();
+
+        if (target != null)
+        {
+            gamePlayController.RemoveObstacleFromBoard(target);
+        }
+
+        Debug.Log("Fireball used. Remaining rage: " + rage);
+    }
+
+    private void DestroyAllObstaclesInCurrentLane()
+    {
+        if (currentWisard == null)
+        {
+            return;
+        }
+
+        if (!wisardLaneIndex.TryGetValue(currentWisard, out int currentLaneIndex))
+        {
+            return;
+        }
+
+        IReadOnlyList<Obstacle> obstacles =
+            gamePlayController.GetActivePlacedObstacles();
+
+        List<Obstacle> obstaclesToRemove = new List<Obstacle>();
+
+        for (int i = 0; i < obstacles.Count; i++)
+        {
+            Obstacle obstacle = obstacles[i];
+
+            if (obstacle == null || !obstacle.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            int obstacleStartLane = obstacle.PlacedStartLane;
+            int obstacleEndLane =
+                obstacleStartLane + obstacle.HeightInLanes - 1;
+
+            bool overlapsCurrentLane =
+                currentLaneIndex >= obstacleStartLane &&
+                currentLaneIndex <= obstacleEndLane;
+
+            if (overlapsCurrentLane)
+            {
+                obstaclesToRemove.Add(obstacle);
+            }
+        }
+
+        for (int i = 0; i < obstaclesToRemove.Count; i++)
+        {
+            gamePlayController.RemoveObstacleFromBoard(
+                obstaclesToRemove[i]
+            );
+        }
+    }
+
+    private void UseLaneClearSkill()
+    {
+        if (!isPlayerActive)
+        {
+            return;
+        }
+
+        if (currentWisard == null)
+        {
+            return;
+        }
+
+        if (rage < 3)
+        {
+            Debug.Log("Not enough rage for lane clear.");
+            return;
+        }
+
+        rage -= 3;
+
+        DestroyAllObstaclesInCurrentLane();
+
+        Debug.Log("Lane clear used. Remaining rage: " + rage);
     }
 }

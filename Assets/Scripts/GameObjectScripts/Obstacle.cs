@@ -12,6 +12,13 @@ public class Obstacle : MonoBehaviour,
     private PlacementGrid placementGrid;
     private Transform previousParent;
     private Vector3 previousPosition;
+    private int placedStartLane = -1;
+    private int placedStartColumn = -1;
+
+    public int PlacedStartLane => placedStartLane;
+    public int PlacedStartColumn => placedStartColumn;
+    public int WidthInCells => data != null ? data.widthInCells : 0;
+    public int HeightInLanes => data != null ? data.heightInLanes : 0;
     public int DamageAmount
     {
         get
@@ -103,9 +110,13 @@ public class Obstacle : MonoBehaviour,
         ResetObstacleState();
     }
 
+
     public void ResetObstacleState()
     {
         isOnDrag = false;
+
+        placedStartLane = -1;
+        placedStartColumn = -1;
 
         if (data != null && spriteRenderer != null)
         {
@@ -268,12 +279,64 @@ public class Obstacle : MonoBehaviour,
                 data.widthInCells
             );
 
-        return placementGrid.CanPlace(
-            startLane,
-            startColumn,
-            data.widthInCells,
-            data.heightInLanes
+        // Önce grid sınırları içerisinde mi?
+        if (!placementGrid.IsInsideGrid(
+                startLane,
+                startColumn,
+                data.widthInCells,
+                data.heightInLanes))
+        {
+            return false;
+        }
+
+        Vector2 snappedPosition =
+            placementGrid.GetPlacementCenter(
+                startLane,
+                startColumn,
+                data.widthInCells,
+                data.heightInLanes
+            );
+
+        Vector2 checkSize = new Vector2(
+            data.widthInCells * placementGrid.CellSize * 0.95f,
+            data.heightInLanes * placementGrid.CellSize * 0.95f
         );
+
+        Collider2D[] hits =
+            Physics2D.OverlapBoxAll(
+                snappedPosition,
+                checkSize,
+                0f
+            );
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Obstacle otherObstacle =
+                hits[i].GetComponentInParent<Obstacle>();
+
+            if (otherObstacle == null)
+            {
+                continue;
+            }
+
+            if (otherObstacle == this)
+            {
+                continue;
+            }
+
+            if (!otherObstacle.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            // Board'a gerçekten yerleştirilmiş obstacle ise placement'ı reddet.
+            if (otherObstacle.PlacedStartLane >= 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void PlaceOnGrid()
@@ -303,6 +366,9 @@ public class Obstacle : MonoBehaviour,
             snappedPosition.y,
             0f
         );
+
+        placedStartLane = startLane;
+        placedStartColumn = startColumn;
     }
 
     private void ReturnToPreviousPosition()
