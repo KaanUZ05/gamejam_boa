@@ -357,6 +357,8 @@ public class PlayerController : MonoBehaviour
         int nextIndex = (index + 1) % wisardsList.Count;
         currentWisard = wisardsList[nextIndex];
         SyncInspectorHealth();
+
+        UIManager.Instance.UpdateHealth(currentWisard.GetHealth());
     }
 
     private void MoveCurrentWisard(int direction)

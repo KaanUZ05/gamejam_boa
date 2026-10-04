@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d42bb99ca0e0490429b974a0cf728b5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Wisard
-  data: {fileID: 0}
+  data: {fileID: 11400000, guid: 037f206d4bc83104d9991384d25803c4, type: 2}
   spriteRenderer: {fileID: 0}
   wisardCollider: {fileID: 0}
 --- !u!95 &-5717266393177481192

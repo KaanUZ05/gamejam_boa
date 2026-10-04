@@ -12,6 +12,7 @@ public class AudioManager : MonoBehaviour
     public AudioSource musicSource;
     public AudioSource sfxSource;
 
+    [SerializeField] private AudioClip gameOverMusic;
     [SerializeField] private AudioClip gamePlayBgMusic;
     [SerializeField] private AudioClip menuBgMusic;
     [SerializeField] private AudioClip fireBallSFX;
@@ -41,6 +42,15 @@ public class AudioManager : MonoBehaviour
         if (musicSource.clip == gamePlayBgMusic) return; // Prevent restarting the same track
 
         musicSource.clip = gamePlayBgMusic;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    public void PlayGameOverBgMusic()
+    {
+        if (musicSource.clip == gameOverMusic) return; // Prevent restarting the same track
+
+        musicSource.clip = gameOverMusic;
         musicSource.loop = true;
         musicSource.Play();
     }
