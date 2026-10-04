@@ -7,6 +7,8 @@ public class Wisard : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Collider2D wisardCollider;
 
+    private Animator _animator;
+
     private void Awake()
     {
         if (wisardCollider == null)
@@ -18,6 +20,8 @@ public class Wisard : MonoBehaviour
         {
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
+
+        _animator = GetComponent<Animator>();
     }
 
     private void OnEnable()

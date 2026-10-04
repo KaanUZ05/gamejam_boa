@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: -1606991428729671268}
   - component: {fileID: 3647503775674790919}
   - component: {fileID: 588611605426569686}
+  - component: {fileID: -5717266393177481192}
   m_Layer: 0
   m_Name: Wisard
   m_TagString: Untagged
@@ -182,3 +183,25 @@ MonoBehaviour:
   data: {fileID: 0}
   spriteRenderer: {fileID: 0}
   wisardCollider: {fileID: 0}
+--- !u!95 &-5717266393177481192
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3546493695115471298}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 9b0993ad96a6f914ba79f8e37cbc3169, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
