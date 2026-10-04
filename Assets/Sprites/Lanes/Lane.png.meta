@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 89cc151f8b658164da4f88bfbe15b89c
+guid: ccad6111d324054409c9ffe17d8f43c8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3847342594457306509
-    second: roadvar3._0
+      213: -4634932940212941592
+    second: yol tasli _0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Lane_3_Sprite
+      name: Lane_Sprite
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 480
-        height: 37
+        width: 4000
+        height: 300
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d858bdf94b1846530800000000000000
-      internalID: 3847342594457306509
+      spriteID: 8ecc9dc3c096dafb0800000000000000
+      internalID: -4634932940212941592
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c1459e3934c11644d97aaf2ee9157303
+    spriteID: 474f9188f46e97141b4fcdc65c94e767
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Lane_3_Sprite: 3847342594457306509
+      Lane_Sprite: -4634932940212941592
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
