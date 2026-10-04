@@ -4,6 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 
 public enum Page { Game, Transition, GameOver, Menu, Settings, Pause }
 
@@ -23,6 +25,7 @@ public class UIManager : MonoBehaviour
     public TMP_Text timerText;           // TimeTxt
     public TMP_Text scoreText;           // ScoreTxt
     public Image[] rageFires;            // Fire images (3)
+    public Image[] hearts;               // Heart images (3)
 
     // Settings
     public Slider volumeSlider;          // Volume slider on the settings page
@@ -57,7 +60,8 @@ public class UIManager : MonoBehaviour
         if (backgroundImage != null) backgroundImage.sprite = dayBackground;
         PageTransection(Page.Menu);
         if (volumeSlider != null) volumeSlider.value = AudioListener.volume;   // keeps the slider in sync after a scene reload
-        UpdateRage(1);
+        UpdateRage(0);
+        UpdateHealth(3);
         UpdateTimer(0f);
         UpdateScore(0);
     }
@@ -74,10 +78,6 @@ public class UIManager : MonoBehaviour
         SetPage(gameOverPage, page == Page.GameOver);
     }
 
-    void SetPage(GameObject go, bool active)
-    {
-        if (go != null) go.SetActive(active);
-    }
 
     void SetPage(GameObject go, bool active)
     {
@@ -111,7 +111,7 @@ public class UIManager : MonoBehaviour
     public void StartGame()
     {
         PageTransection(Page.Game);
-        OnRoundStartPressed?.Invoke();
+        GameManager.Instance.StartGamePlay();
     }
 
     // Settings button on the menu page and on the pause page
@@ -168,7 +168,7 @@ public class UIManager : MonoBehaviour
         StartCoroutine(TransitionRoutine(toNight));
     }
 
-    IEnumerator TransitionRoutine(bool toNight)
+   IEnumerator TransitionRoutine(bool toNight)
     {
         PageTransection(Page.Transition);
         yield return null;
@@ -186,11 +186,11 @@ public class UIManager : MonoBehaviour
 
         // Wait for Space or the continue button (presses during the animation are ignored)
         continuePressed = false;
-        while (!continuePressed && !Input.GetKeyDown(KeyCode.Space))
+        while (!continuePressed && !(Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame))
             yield return null;
 
         PageTransection(Page.Game);
-        OnRoundStartPressed?.Invoke();
+        GameManager.Instance.StartNextRound();
     }
 
     public void UpdateRage(int rage)
@@ -198,6 +198,14 @@ public class UIManager : MonoBehaviour
         // Collected fires are white (normal sprite colors), the others are transparent
         for (int i = 0; i < rageFires.Length; i++)
             rageFires[i].color = i < rage ? Color.white : Color.clear;
+    }
+
+    public void UpdateHealth(int health)
+    {
+        // Lost hearts are faded, remaining hearts are normal
+        for (int i = 0; i < hearts.Length; i++)
+            if (hearts[i] != null)
+                hearts[i].color = i < health ? Color.white : Color.clear;   
     }
 
     public void UpdateTimer(float seconds)
