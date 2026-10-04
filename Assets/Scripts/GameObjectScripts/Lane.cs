@@ -5,10 +5,13 @@ public class Lane : MonoBehaviour
 {
     public int laneIndex;
 
-    [SerializeField] private Transform WisarPosition;
+    [Header("Lane Positions")]
+    public Transform WisarPosition;     // Where controlled/spelled Wisards stand (middle lane on round start)
+    public Transform WisardSpawnPoint;  // Where wild Wisards spawn randomly during the round
+
     [SerializeField] private Collider2D SpellArea;
 
-    // to inform the PlayerController
+    // Informs PlayerController when a wild Wisard enters/exits the SpellArea
     public static Action<Wisard, Lane> WisardEnteredZone;
     public static Action<Wisard, Lane> WisardExitedZone;
 

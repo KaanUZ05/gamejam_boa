@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,13 +15,16 @@ public class GamePlayController : MonoBehaviour
     [SerializeField] private Wisard WisardPrefab;
     [SerializeField] private Transform WisardPoolContent;
     [SerializeField] private int initialWisardPoolCount = 15;
-    private List<Wisard> WisardPool; // All inactive wisards live here
+    private List<Wisard> WisardPool;     // All inactive wisards live here
+    private List<Wisard> activeWildWisards = new List<Wisard>(); // Wild wisards currently walking in lanes
+
+    [Header("Wild Wisard Spawning")]
+    [SerializeField] private float wildWisardSpawnInterval = 8f;
+    private Coroutine wildWisardSpawnCoroutine;
 
     [Header("Controllers")]
     [SerializeField] private ConveyorBeltController conveyorBeltController;
-
-    [Header("Lanes")]
-    [SerializeField] private Lane lanes;
+    [SerializeField] private PlayerController playerController;
 
     [Header("Difficulty Scaling (For Conveyor Belt)")]
     [Tooltip("Time in seconds when obstacle spawning reaches 100% maximum difficulty.")]
@@ -96,6 +100,10 @@ public class GamePlayController : MonoBehaviour
         ConveyorBeltController.ObstacleRequested += HandleObstacleRequest;
         ConveyorBeltController.ConveyorBeltClean += HandleConveyorBeltClean;
         Border.OnObstacleHitBoundary += HandleObstacleHitBoundary;
+
+        PlayerController.WisardExpired += ReturnWisardToPool;
+        PlayerController.PlayerWisardsClean += HandlePlayerWisardsClean;
+        PlayerController.WildWisardSpelled += HandleWildWisardSpelled;
     }
 
     private void OnDisable()
@@ -103,6 +111,10 @@ public class GamePlayController : MonoBehaviour
         ConveyorBeltController.ObstacleRequested -= HandleObstacleRequest;
         ConveyorBeltController.ConveyorBeltClean -= HandleConveyorBeltClean;
         Border.OnObstacleHitBoundary -= HandleObstacleHitBoundary;
+
+        PlayerController.WisardExpired -= ReturnWisardToPool;
+        PlayerController.PlayerWisardsClean -= HandlePlayerWisardsClean;
+        PlayerController.WildWisardSpelled -= HandleWildWisardSpelled;
     }
 
     private void Start()
@@ -110,6 +122,11 @@ public class GamePlayController : MonoBehaviour
         if (conveyorBeltController == null)
         {
             Debug.LogError("ASSIGN THE CONVEYOR_BELT!!!!");
+        }
+
+        if (playerController == null)
+        {
+            Debug.LogError("ASSIGN THE PLAYER_CONTROLLER!!!!");
         }
     }
 
@@ -125,18 +142,12 @@ public class GamePlayController : MonoBehaviour
     // EVENT HANDLERS
     // =========================================================================
 
-    /// <summary>
-    /// Handler for ConveyorBeltController.ObstacleRequested
-    /// </summary>
     private void HandleObstacleRequest()
     {
         Obstacle obs = GetObstaclePrefab();
         conveyorBeltController.SpawnObstacle(obs);
     }
 
-    /// <summary>
-    /// Handler for ConveyorBeltController.ConveyorBeltClean
-    /// </summary>
     private void HandleConveyorBeltClean(List<Obstacle> obstacles)
     {
         if (obstacles == null) return;
@@ -147,16 +158,67 @@ public class GamePlayController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Handler for Border.OnObstacleHitBoundary
-    /// </summary>
     private void HandleObstacleHitBoundary(Obstacle obs)
     {
         ReturnObstacleToPool(obs);
     }
 
+    private void HandlePlayerWisardsClean(List<Wisard> wisards)
+    {
+        if (wisards == null) return;
+
+        foreach (Wisard wisard in wisards)
+        {
+            ReturnWisardToPool(wisard);
+        }
+    }
+
+    private void HandleWildWisardSpelled(Wisard spelledWisard)
+    {
+        // Once spelled by PlayerController, it is no longer a wild Wisard
+        activeWildWisards.Remove(spelledWisard);
+    }
+
     // =========================================================================
-    // POOL METHODS
+    // WILD WISARD SPAWNING (Random Lane Spawn Points)
+    // =========================================================================
+
+    private IEnumerator WildWisardSpawnRoutine()
+    {
+        while (isRoundActive)
+        {
+            yield return new WaitForSeconds(wildWisardSpawnInterval);
+
+            if (isRoundActive)
+            {
+                SpawnWildWisardInRandomLane();
+            }
+        }
+    }
+
+    private void SpawnWildWisardInRandomLane()
+    {
+        Lane randomLane = playerController.GetRandomLane();
+        if (randomLane == null || randomLane.WisardSpawnPoint == null) return;
+
+        Wisard wildWisard = GetWisardPrefab();
+        wildWisard.transform.position = randomLane.WisardSpawnPoint.position;
+        wildWisard.gameObject.SetActive(true);
+
+        activeWildWisards.Add(wildWisard);
+    }
+
+    private void ReturnAllWildWisardsToPool()
+    {
+        for (int i = activeWildWisards.Count - 1; i >= 0; i--)
+        {
+            ReturnWisardToPool(activeWildWisards[i]);
+        }
+        activeWildWisards.Clear();
+    }
+
+    // =========================================================================
+    // POOL METHODS (OBSTACLES & WISARDS)
     // =========================================================================
 
     public Obstacle GetObstaclePrefab()
@@ -190,12 +252,60 @@ public class GamePlayController : MonoBehaviour
         }
     }
 
+    public Wisard GetWisardPrefab()
+    {
+        if (WisardPool.Count > 0)
+        {
+            Wisard result = WisardPool[0];
+            WisardPool.RemoveAt(0);
+            return result;
+        }
+
+        Wisard newWisard = Instantiate(WisardPrefab, WisardPoolContent);
+        newWisard.gameObject.SetActive(false);
+        return newWisard;
+    }
+
+    public void ReturnWisardToPool(Wisard wisard)
+    {
+        if (wisard == null) return;
+
+        activeWildWisards.Remove(wisard);
+        wisard.gameObject.SetActive(false);
+        wisard.transform.SetParent(WisardPoolContent, true);
+
+        if (!WisardPool.Contains(wisard))
+        {
+            WisardPool.Add(wisard);
+        }
+        else
+        {
+            Debug.LogError("Why this wisard is still a child of this class?");
+        }
+    }
+
+    // =========================================================================
+    // ROUND START & END
+    // =========================================================================
+
     public void StartRound(int roundNumber)
     {
         currentRound = roundNumber;
         currentSurvivalTime = 0f;
         isRoundActive = true;
 
+        // 1. Pull the first Wisard from the pool and spawn it at the middle lane's WisarPosition
+        Wisard firstWisard = GetWisardPrefab();
+        playerController.ActivatePlayer(firstWisard);
+
+        // 2. Start spawning wild Wisards at random lane spawn points
+        if (wildWisardSpawnCoroutine != null)
+        {
+            StopCoroutine(wildWisardSpawnCoroutine);
+        }
+        wildWisardSpawnCoroutine = StartCoroutine(WildWisardSpawnRoutine());
+
+        // 3. Activate the conveyor belt
         conveyorBeltController.ActivateBelt();
     }
 
@@ -204,6 +314,18 @@ public class GamePlayController : MonoBehaviour
         if (!isRoundActive) return;
         isRoundActive = false;
 
+        // 1. Stop wild Wisard spawning and send all wild Wisards back to pool
+        if (wildWisardSpawnCoroutine != null)
+        {
+            StopCoroutine(wildWisardSpawnCoroutine);
+            wildWisardSpawnCoroutine = null;
+        }
+        ReturnAllWildWisardsToPool();
+
+        // 2. Send all PlayerController Wisards back to pool
+        playerController.InactivatePlayer();
+
+        // 3. Stop conveyor belt and return belt obstacles to pool
         conveyorBeltController.InactivateBelt();
 
         RoundFinished?.Invoke(currentSurvivalTime);
