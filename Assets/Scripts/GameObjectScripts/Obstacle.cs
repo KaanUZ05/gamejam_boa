@@ -12,6 +12,19 @@ public class Obstacle : MonoBehaviour,
     private PlacementGrid placementGrid;
     private Transform previousParent;
     private Vector3 previousPosition;
+    public int DamageAmount
+    {
+        get
+        {
+            if (data == null)
+            {
+                Debug.LogError("ObstacleData is null. Cannot get damage amount.");
+                return 0;
+            }
+
+            return data.damageAmount;
+        }
+    }
 
     [SerializeField] private ObstacleData data;
     [SerializeField] private SpriteRenderer spriteRenderer;

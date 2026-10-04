@@ -15,6 +15,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float laneMoveDuration = 0.2f;
 
     [Header("Current State")]
+
+    [Header("Health Settings")]
+    [SerializeField] private int maxHealth = 3;
+    [SerializeField] private float invulnerabilityDuration = 2f;
+
+    [Header("Health State")]
+    [SerializeField] private int currentHealth;
+    private bool isInvulnerable = false;
     private List<Wisard> wisardsList = new List<Wisard>();
     private Wisard currentWisard;
     [SerializeField] private int rage;
@@ -40,6 +48,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         isPlayerActive = false;
+        currentHealth = maxHealth;
 
         if (lanes != null)
         {
@@ -97,6 +106,8 @@ public class PlayerController : MonoBehaviour
     public void ActivatePlayer(Wisard initialWisard)
     {
         ResetPlayerWisards();
+        currentHealth = maxHealth;
+        isInvulnerable = false;
 
         if (initialWisard == null || lanes == null || lanes.Length == 0)
         {
@@ -360,5 +371,99 @@ public class PlayerController : MonoBehaviour
         }
 
         moveCoroutines.Remove(wisard);
+    }
+
+    public void TakeDamage(int amount, Wisard damagedWisard)
+    {
+        if (!isPlayerActive)
+        {
+            return;
+        }
+
+        if (isInvulnerable)
+        {
+            return;
+        }
+
+        if (amount <= 0)
+        {
+            Debug.LogError("Damage amount must be greater than 0.");
+            return;
+        }
+
+        currentHealth -= amount;
+
+        Debug.Log("Player took " + amount + " damage. Current health: " + currentHealth);
+
+        if (currentHealth <= 0)
+        {
+            currentHealth = 0;
+            HandlePlayerDeath();
+            return;
+        }
+
+        StartCoroutine(
+            InvulnerabilityRoutine(damagedWisard)
+        );
+    }
+
+    private IEnumerator InvulnerabilityRoutine(Wisard damagedWisard)
+    {
+        isInvulnerable = true;
+
+        if (damagedWisard == null)
+        {
+            Debug.LogError("Damaged Wisard is null.");
+            isInvulnerable = false;
+            yield break;
+        }
+
+        SpriteRenderer renderer = damagedWisard.SpriteRenderer;
+        Collider2D wisardCollider = damagedWisard.Collider;
+
+        if (renderer == null)
+        {
+            Debug.LogError("Wisard SpriteRenderer is missing.");
+        }
+
+        if (wisardCollider == null)
+        {
+            Debug.LogError("Wisard Collider2D is missing.");
+        }
+
+        if (renderer != null)
+        {
+            Color color = renderer.color;
+            color.a = 0.5f;
+            renderer.color = color;
+        }
+
+        if (wisardCollider != null)
+        {
+            wisardCollider.enabled = false;
+        }
+
+        yield return new WaitForSeconds(invulnerabilityDuration);
+
+        if (renderer != null)
+        {
+            Color color = renderer.color;
+            color.a = 1f;
+            renderer.color = color;
+        }
+
+        if (wisardCollider != null)
+        {
+            wisardCollider.enabled = true;
+        }
+
+        isInvulnerable = false;
+    }
+
+    private void HandlePlayerDeath()
+    {
+        Debug.Log("Player died.");
+
+        isPlayerActive = false;
     }
 }
