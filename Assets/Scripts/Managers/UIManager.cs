@@ -9,8 +9,12 @@ using Unity.VisualScripting;
 
 public enum Page { Game, Transition, GameOver, Menu, Settings, Pause }
 
+[DefaultExecutionOrder(-1000)]
 public class UIManager : MonoBehaviour
 {
+    internal const string MenuScenePath = "Assets/Scenes/MenuScene.unity";
+    const string GameScenePath = "Assets/Scenes/GameScene.unity";
+
     public static UIManager Instance;
 
     // Pages
@@ -49,14 +53,26 @@ public class UIManager : MonoBehaviour
     Page currentPage;
     Page pageBeforeSettings;
     bool continuePressed;
+    bool startingGame;
 
     void Awake()
     {
         Instance = this;
+        // This scene renders screen-space UI; its global light is never needed.
+        foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            if (root.name == "Global Light 2D") root.SetActive(false);
+        if (settingsPage == null && menuPage != null)
+            SettingsPageBuilder.Create(this);
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     void Start()
     {
+        ConfigureLoadedScenes();
         if (backgroundImage != null) backgroundImage.sprite = dayBackground;
         PageTransection(Page.Menu);
         if (volumeSlider != null) volumeSlider.value = AudioListener.volume;   // keeps the slider in sync after a scene reload
@@ -100,18 +116,80 @@ public class UIManager : MonoBehaviour
     }
 
     // Main Menu button on the pause page and Play Again button on the game over page.
-    // Reloading the scene resets everything; Start() then opens the menu page.
+    // Reload the UI scene alone so both UI and gameplay state are reset.
     public void OpenMenu()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene(MenuScenePath, LoadSceneMode.Single);
     }
 
     // Play button on the menu page
     public void StartGame()
     {
+        Debug.Log("Here");
+        if (startingGame) return;
+        startingGame = true;
+        StartCoroutine(StartGameRoutine());
+    }
+
+    IEnumerator StartGameRoutine()
+    {
+        Scene gameScene = SceneManager.GetSceneByPath(GameScenePath);
+        if (!gameScene.isLoaded)
+        {
+            // These must be disabled BEFORE the other scene's OnEnable callbacks.
+            // Disabling them after loading is too late for duplicate-light errors.
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                if (root.name == "Main Camera" || root.name == "Global Light 2D" || root.name == "EventSystem")
+                    root.SetActive(false);
+            }
+            yield return SceneManager.LoadSceneAsync(GameScenePath, LoadSceneMode.Additive);
+        }
+
+        ConfigureLoadedScenes();
+        // Let the newly loaded managers finish Start() before starting a round.
+        yield return null;
+
+        if (GameManager.Instance == null)
+        {
+            startingGame = false;
+            Debug.LogError("GameScene must contain an active GameManager.", this);
+            yield break;
+        }
+
+        Time.timeScale = 1f;
         PageTransection(Page.Game);
         GameManager.Instance.StartGamePlay();
+        startingGame = false;
+    }
+
+    void ConfigureLoadedScenes()
+    {
+        Scene menuScene = SceneManager.GetSceneByPath(MenuScenePath);
+        Scene gameScene = SceneManager.GetSceneByPath(GameScenePath);
+        if (!menuScene.isLoaded || !gameScene.isLoaded) return;
+
+        // MenuScene owns the UI/input; GameScene owns the world camera/light.
+        foreach (GameObject root in menuScene.GetRootGameObjects())
+        {
+            if (root.name == "Main Camera" || root.name == "Global Light 2D")
+                root.SetActive(false);
+        }
+
+        foreach (GameObject root in gameScene.GetRootGameObjects())
+        {
+            if (root.name == "EventSystem" || root.name == "GamePlayCanvas" || root.name == "EndGameCanvas")
+                root.SetActive(false);
+            else if (root.name == "Main Camera" || root.name == "Global Light 2D")
+                root.SetActive(true);
+        }
+
+        // Re-enable the menu input only after the gameplay copy is disabled.
+        foreach (GameObject root in menuScene.GetRootGameObjects())
+            if (root.name == "EventSystem") root.SetActive(true);
+
+        SceneManager.SetActiveScene(gameScene);
     }
 
     // Settings button on the menu page and on the pause page

@@ -1,0 +1,5 @@
+{
+    "name": "SceneStartupTests",
+    "references": ["UnityEngine.UI"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
